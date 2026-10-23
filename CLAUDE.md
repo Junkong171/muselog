@@ -16,6 +16,7 @@
 - `npm run dev`: 개발 서버 실행 (브라우저에서 확인)
 - `npm run build`: 배포용 빌드 (에러 확인용으로도 사용)
 - `npm run lint`: 코드 검사 (oxlint)
+- `npm test`: 자동 테스트 (Vitest)
 
 ## 폴더 구조
 
@@ -26,7 +27,9 @@ src/
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
+  lib/        순수 계산 함수와 테스트 (stats.js)
 public/       파비콘, 아이콘
+docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 ```
 
 ## localStorage 키
@@ -60,8 +63,8 @@ public/       파비콘, 아이콘
 
 ## 작업 흐름
 
-1. **명세 작성**: 무엇을 어떻게 바꿀지 한국어로 정리해 보여준다.
+1. **명세 작성**: `/new-feature`로 `docs/specs/F-xxx-*.md`를 쓰고 한국어로 보여준다.
 2. **사용자 승인**: 승인 전에는 코드를 수정하지 않는다.
 3. **구현**: 필요한 부분만 수정한다.
-4. **독립 검증**: `npm run build`, `npm run lint`를 실행하고, 확인할 화면을 안내한다.
+4. **독립 검증**: `/verify-feature <명세>`로 tester 서브에이전트에 맡긴다. 명세 경로와 변경 내용만 넘기고(구현 대화는 넘기지 않음), 결과 원문을 보여준다. FAIL이 있으면 완료가 아니다.
 5. **배포 승인**: 배포나 main 반영은 사용자가 승인한 경우에만 한다.
