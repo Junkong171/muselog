@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import { dateKey, sumMinutesByDay, calcStreak, getWeekDays, rankSongs } from "./lib/stats";
 
 const initialSongs = [
   { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
@@ -9,7 +10,6 @@ const initialSongs = [
 
 const TABS = ["대시보드", "내 연습곡", "연습 기록", "연습 통계"];
 const TAB_ICONS = ["⌂", "♫", "▤", "◔"];
-const DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
 
 function loadData(key, fallback) {
   try {
@@ -18,13 +18,6 @@ function loadData(key, fallback) {
   } catch {
     return fallback;
   }
-}
-
-function dateKey(value) {
-  const d = new Date(value);
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
 }
 
 function App() {
@@ -109,30 +102,13 @@ function App() {
   }
 
   // ---------- 통계 계산 ----------
-  const minutesByDay = {};
-  logs.forEach(log => {
-    const key = dateKey(log.date);
-    minutesByDay[key] = (minutesByDay[key] || 0) + log.minutes;
-  });
+  const minutesByDay = sumMinutesByDay(logs);
 
-  const todayKey = dateKey(new Date());
+  const now = new Date();
+  const todayKey = dateKey(now);
   const todayMinutes = minutesByDay[todayKey] || 0;
 
-  const weekStart = new Date();
-  weekStart.setHours(0, 0, 0, 0);
-  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
-
-  const weekDays = DAY_LABELS.map((label, i) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    const key = dateKey(d);
-    return {
-      label,
-      key,
-      minutes: minutesByDay[key] || 0,
-      isToday: key === todayKey,
-    };
-  });
+  const weekDays = getWeekDays(minutesByDay, now);
 
   const weekMinutes = weekDays.reduce((sum, day) => sum + day.minutes, 0);
   const weekPracticeDays = weekDays.filter(day => day.minutes > 0).length;
@@ -142,22 +118,9 @@ function App() {
   const practicedDays = Object.keys(minutesByDay).length;
   const averageMinutes = practicedDays ? Math.round(totalMinutes / practicedDays) : 0;
 
-  let streak = 0;
-  const cursor = new Date();
-  if (!minutesByDay[dateKey(cursor)]) cursor.setDate(cursor.getDate() - 1);
-  while (minutesByDay[dateKey(cursor)] > 0) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
+  const streak = calcStreak(minutesByDay, now);
 
-  const songTotals = {};
-  logs.forEach(log => {
-    const name = log.songTitle || "자유 연습";
-    songTotals[name] = (songTotals[name] || 0) + log.minutes;
-  });
-  const songStats = Object.entries(songTotals)
-    .map(([name, total]) => ({ name, total }))
-    .sort((a, b) => b.total - a.total);
+  const songStats = rankSongs(logs);
   const maxSongTotal = songStats.length ? songStats[0].total : 1;
 
   return (
