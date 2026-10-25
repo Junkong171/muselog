@@ -40,21 +40,64 @@ export function formatDateLabel(key) {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})`;
 }
 
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 // 저장된 값이 깨져 있어도 앱이 멈추지 않도록 올바른 일정만 남긴다.
+// time이 없는 옛 일정(F-002)이나 형식이 틀린 time은 ""(종일)로 읽는다.
 export function normalizeEvents(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter(e => e && typeof e.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.date) && e.title)
-    .map(e => ({ id: e.id ?? `${e.date}-${e.title}`, date: e.date, title: String(e.title), memo: e.memo ? String(e.memo) : "" }));
+    .map(e => ({
+      id: e.id ?? `${e.date}-${e.title}`,
+      date: e.date,
+      time: TIME_PATTERN.test(e.time) ? e.time : "",
+      title: String(e.title),
+      memo: e.memo ? String(e.memo) : "",
+    }));
 }
 
-// 오늘 포함 앞으로의 일정, 가까운 날짜 순 (같은 날은 저장 순서)
-export function upcomingEvents(events, today, limit = 5) {
-  const todayKey = dateKey(today);
+// 시간 입력 칸 아래 선택 목록: 시 00~23, 분 00~55 (5분 단위)
+export const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, "0"));
+export const MINUTE_OPTIONS = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"));
+
+// 친 숫자로 시작하는 값만 남긴다. 시 "1" → 01, 10~19 / 분 "3" → 30, 35
+export function filterOptions(options, text) {
+  const value = String(text ?? "").trim();
+  if (!value) return options;
+  return options.filter(option => option.startsWith(value) || option.replace(/^0/, "").startsWith(value));
+}
+
+// 시·분 칸을 저장 형식으로 합친다.
+// ("9", "5") → "09:05", ("14", "") → "14:00", ("", "") → ""(종일), 시간이 아니면 null
+export function combineTime(hourText, minuteText) {
+  const hour = String(hourText ?? "").trim();
+  const minute = String(minuteText ?? "").trim();
+  if (!hour && !minute) return "";
+  if (!/^\d{1,2}$/.test(hour) || (minute && !/^\d{1,2}$/.test(minute))) return null;
+  const h = Number(hour);
+  const m = minute ? Number(minute) : 0;
+  if (h > 23 || m > 59) return null;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+export function formatEventTime(time) {
+  return time || "종일";
+}
+
+// 날짜순, 같은 날은 종일 → 이른 시간 → 저장 순서
+export function sortEvents(events) {
   return events
     .map((e, index) => ({ e, index }))
-    .filter(({ e }) => e.date >= todayKey)
-    .sort((a, b) => a.e.date.localeCompare(b.e.date) || a.index - b.index)
-    .slice(0, limit)
+    .sort((a, b) =>
+      a.e.date.localeCompare(b.e.date) ||
+      (a.e.time || "").localeCompare(b.e.time || "") ||
+      a.index - b.index)
     .map(({ e }) => e);
+}
+
+// 오늘 포함 앞으로의 일정, 가까운 순
+export function upcomingEvents(events, today, limit = 5) {
+  const todayKey = dateKey(today);
+  return sortEvents(events.filter(e => e.date >= todayKey)).slice(0, limit);
 }

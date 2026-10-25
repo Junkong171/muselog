@@ -1161,3 +1161,79 @@ select:focus-visible {
     font-size: 9px;
   }
 }
+
+.event-time {
+  margin-right: 8px;
+  color: #8a74d1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.time-field {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.time-colon {
+  color: #5a4a8a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.time-combo {
+  position: relative;
+  width: 58px;
+}
+
+.time-combo input {
+  width: 100%;
+  text-align: center;
+}
+
+.time-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  max-height: 222px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(45, 38, 64, 0.12);
+  list-style: none;
+}
+
+.time-list button {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  color: #3a3055;
+  background: none;
+  font-size: 12px;
+  text-align: center;
+}
+
+.time-list button:hover {
+  background: #f4f1fa;
+}
+
+.time-list button.active {
+  color: #5a4a8a;
+  background: var(--purple-light);
+  font-weight: 700;
+}
+
+.time-error {
+  margin: -8px 0 12px;
+  color: #c0475b;
+  font-size: 12px;
+  font-weight: 600;
+}

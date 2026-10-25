@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   calcDday,
+  combineTime,
+  filterOptions,
   formatDateLabel,
   formatDday,
+  formatEventTime,
   getMonthGrid,
+  HOUR_OPTIONS,
+  MINUTE_OPTIONS,
   normalizeEvents,
+  sortEvents,
   upcomingEvents,
 } from "./calendar";
 
@@ -65,7 +71,94 @@ describe("normalizeEvents", () => {
       { id: 3, date: "2026-10-31" },
       null,
     ]);
-    expect(result).toEqual([{ id: 1, date: "2026-10-30", title: "레슨", memo: "" }]);
+    expect(result).toEqual([{ id: 1, date: "2026-10-30", time: "", title: "레슨", memo: "" }]);
+  });
+
+  it("time이 없는 옛 일정은 종일(\"\")로 읽고 다른 필드는 그대로 둔다", () => {
+    const old = [{ id: 7, date: "2026-10-30", title: "레슨", memo: "3번 곡" }];
+    expect(normalizeEvents(old)).toEqual([
+      { id: 7, date: "2026-10-30", time: "", title: "레슨", memo: "3번 곡" },
+    ]);
+  });
+
+  it("HH:MM 형식이 아닌 time은 종일로 읽는다", () => {
+    const times = ["14:00", "25:00", "25시", 1400, "9:00", "23:59"].map(time =>
+      normalizeEvents([{ id: 1, date: "2026-10-30", time, title: "레슨" }])[0].time
+    );
+    expect(times).toEqual(["14:00", "", "", "", "", "23:59"]);
+  });
+});
+
+describe("combineTime (시·분 합치기)", () => {
+  it("시·분을 HH:MM으로 합친다 (분은 1분 단위 가능)", () => {
+    expect(combineTime("9", "5")).toBe("09:05");
+    expect(combineTime("14", "07")).toBe("14:07");
+    expect(combineTime("0", "0")).toBe("00:00");
+    expect(combineTime("23", "59")).toBe("23:59");
+  });
+
+  it("분을 비우면 정각, 둘 다 비우면 종일(\"\")", () => {
+    expect(combineTime("14", "")).toBe("14:00");
+    expect(combineTime("", "")).toBe("");
+    expect(combineTime(" ", undefined)).toBe("");
+  });
+
+  it("시간이 아니면 null", () => {
+    expect(combineTime("24", "00")).toBeNull();
+    expect(combineTime("14", "60")).toBeNull();
+    expect(combineTime("", "30")).toBeNull();
+    expect(combineTime("1a", "00")).toBeNull();
+    expect(combineTime("123", "00")).toBeNull();
+  });
+});
+
+describe("filterOptions (칸별 목록 거르기)", () => {
+  it("목록: 시 00~23 24개, 분 00~55 5분 단위 12개", () => {
+    expect(HOUR_OPTIONS).toHaveLength(24);
+    expect(HOUR_OPTIONS.at(-1)).toBe("23");
+    expect(MINUTE_OPTIONS).toEqual(["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]);
+  });
+
+  it("빈칸이면 전체", () => {
+    expect(filterOptions(HOUR_OPTIONS, "")).toEqual(HOUR_OPTIONS);
+  });
+
+  it("친 숫자로 시작하는 값만 남긴다", () => {
+    expect(filterOptions(HOUR_OPTIONS, "1")).toEqual(["01", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19"]);
+    expect(filterOptions(HOUR_OPTIONS, "9")).toEqual(["09"]);
+    expect(filterOptions(MINUTE_OPTIONS, "3")).toEqual(["30", "35"]);
+  });
+
+  it("맞는 값이 없으면 빈 배열 (예: 1분 단위 직접 입력)", () => {
+    expect(filterOptions(MINUTE_OPTIONS, "07")).toEqual([]);
+    expect(filterOptions(HOUR_OPTIONS, "3")).toEqual(["03"]);
+    expect(filterOptions(HOUR_OPTIONS, "25")).toEqual([]);
+  });
+});
+
+describe("시간 표시와 정렬", () => {
+  it("시간이 없으면 \"종일\"", () => {
+    expect(formatEventTime("")).toBe("종일");
+    expect(formatEventTime("14:00")).toBe("14:00");
+  });
+
+  it("같은 날은 종일 → 이른 시간 → 저장 순서", () => {
+    const events = [
+      { ...event("2026-10-30", "레슨"), time: "14:00" },
+      { ...event("2026-10-30", "합주"), time: "10:00" },
+      { ...event("2026-10-30", "종일"), time: "" },
+      { ...event("2026-10-30", "레슨2"), time: "14:00" },
+      { ...event("2026-10-29", "전날"), time: "20:00" },
+    ];
+    expect(sortEvents(events).map(e => e.title)).toEqual(["전날", "종일", "합주", "레슨", "레슨2"]);
+  });
+
+  it("다가오는 일정도 같은 순서", () => {
+    const events = [
+      { ...event("2026-10-26", "오후"), time: "15:00" },
+      { ...event("2026-10-26", "오전"), time: "09:00" },
+    ];
+    expect(upcomingEvents(events, local(2026, 10, 25)).map(e => e.title)).toEqual(["오전", "오후"]);
   });
 });
 

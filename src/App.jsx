@@ -1,12 +1,18 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import "./App.css";
 import { dateKey, sumMinutesByDay, calcStreak, getWeekDays, rankSongs } from "./lib/stats";
 import {
   getMonthGrid,
   calcDday,
+  combineTime,
+  filterOptions,
   formatDday,
   formatDateLabel,
+  formatEventTime,
+  HOUR_OPTIONS,
+  MINUTE_OPTIONS,
   normalizeEvents,
+  sortEvents,
   upcomingEvents,
 } from "./lib/calendar";
 
@@ -49,6 +55,12 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
   const [eventTitle, setEventTitle] = useState("");
   const [eventMemo, setEventMemo] = useState("");
+  const [eventHour, setEventHour] = useState("");
+  const [eventMinute, setEventMinute] = useState("");
+  const [openTimeList, setOpenTimeList] = useState(null); // "hour" | "minute" | null
+  const [timeListFiltered, setTimeListFiltered] = useState(false);
+  const [timeError, setTimeError] = useState(false);
+  const minuteInputRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem("muselog-songs", JSON.stringify(songs));
@@ -126,12 +138,92 @@ function App() {
     e.preventDefault();
     if (!eventTitle.trim()) return;
 
+    const time = combineTime(eventHour, eventMinute);
+    if (time === null) {
+      setTimeError(true);
+      return;
+    }
+
     setEvents(current => [
       ...current,
-      { id: Date.now(), date: selectedDate, title: eventTitle.trim(), memo: eventMemo.trim() },
+      { id: Date.now(), date: selectedDate, time, title: eventTitle.trim(), memo: eventMemo.trim() },
     ]);
     setEventTitle("");
     setEventMemo("");
+    setEventHour("");
+    setEventMinute("");
+    setOpenTimeList(null);
+    setTimeError(false);
+  }
+
+  // 칸을 누르면 걸러지지 않은 목록 전체를 연다 (지금 값은 강조)
+  function showTimeList(which) {
+    setOpenTimeList(which);
+    setTimeListFiltered(false);
+  }
+
+  function typeTime(which, text) {
+    const digits = text.replace(/\D/g, "").slice(0, 2);
+    if (which === "hour") {
+      setEventHour(digits);
+      if (digits.length === 2) {
+        minuteInputRef.current?.focus();
+        return;
+      }
+    } else {
+      setEventMinute(digits);
+    }
+    setOpenTimeList(which);
+    setTimeListFiltered(true);
+  }
+
+  function pickTime(which, value) {
+    if (which === "hour") {
+      setEventHour(value);
+      if (!value) setEventMinute("");
+    } else {
+      setEventMinute(value);
+    }
+    setOpenTimeList(null);
+    setTimeError(false);
+  }
+
+  function renderTimeList(which) {
+    if (openTimeList !== which) return null;
+    const value = which === "hour" ? eventHour : eventMinute;
+    const allOptions = which === "hour" ? HOUR_OPTIONS : MINUTE_OPTIONS;
+    const options = timeListFiltered ? filterOptions(allOptions, value) : allOptions;
+    const showAllDay = which === "hour" && (!timeListFiltered || !value);
+    if (options.length === 0 && !showAllDay) return null;
+    const current = value ? value.padStart(2, "0") : "";
+
+    return (
+      <ul className="time-list" role="listbox">
+        {/* onMouseDown preventDefault: 누르는 순간 칸의 포커스가 빠져 목록이 먼저 닫히지 않게 */}
+        {showAllDay && (
+          <li>
+            <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => pickTime("hour", "")}>
+              종일
+            </button>
+          </li>
+        )}
+        {options.map(option => (
+          <li key={option}>
+            <button
+              type="button"
+              className={option === current ? "active" : ""}
+              ref={el => {
+                if (option === current) el?.scrollIntoView({ block: "nearest" });
+              }}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => pickTime(which, option)}
+            >
+              {option}
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
   }
 
   function deleteEvent(id) {
@@ -172,7 +264,7 @@ function App() {
 
   // ---------- 캘린더 계산 ----------
   const calCells = getMonthGrid(calMonth.getFullYear(), calMonth.getMonth());
-  const selectedEvents = events.filter(event => event.date === selectedDate);
+  const selectedEvents = sortEvents(events.filter(event => event.date === selectedDate));
   const upcoming = upcomingEvents(events, now);
   const nextEvent = upcoming[0];
 
@@ -447,7 +539,7 @@ function App() {
                 ))}
                 {calCells.map((cell, i) => {
                   if (!cell) return <span className="cal-blank" key={`blank-${i}`} />;
-                  const dayEvents = events.filter(event => event.date === cell.key);
+                  const dayEvents = sortEvents(events.filter(event => event.date === cell.key));
                   return (
                     <button
                       key={cell.key}
@@ -456,7 +548,9 @@ function App() {
                     >
                       <span className="cal-date">{cell.day}</span>
                       {dayEvents.slice(0, 2).map(event => (
-                        <span className="cal-event" key={event.id}>{event.title}</span>
+                        <span className="cal-event" key={event.id}>
+                          {event.time ? `${event.time} ` : ""}{event.title}
+                        </span>
                       ))}
                       {dayEvents.length > 2 && (
                         <span className="cal-more">+{dayEvents.length - 2}</span>
@@ -477,6 +571,30 @@ function App() {
                   onChange={e => setEventTitle(e.target.value)}
                   placeholder="일정 제목 (예: 레슨)"
                 />
+                <div className="time-field" role="group" aria-label="시간 (비우면 종일)">
+                  {["hour", "minute"].map(which => (
+                    <Fragment key={which}>
+                      {which === "minute" && <span className="time-colon">:</span>}
+                      <div className="time-combo">
+                        <input
+                          ref={which === "minute" ? minuteInputRef : null}
+                          value={which === "hour" ? eventHour : eventMinute}
+                          onChange={e => typeTime(which, e.target.value)}
+                          onFocus={() => showTimeList(which)}
+                          onClick={() => showTimeList(which)}
+                          onBlur={() => setOpenTimeList(null)}
+                          onKeyDown={e => e.key === "Escape" && setOpenTimeList(null)}
+                          placeholder={which === "hour" ? "시" : "분"}
+                          aria-label={which === "hour" ? "시" : "분"}
+                          inputMode="numeric"
+                          maxLength={2}
+                          autoComplete="off"
+                        />
+                        {renderTimeList(which)}
+                      </div>
+                    </Fragment>
+                  ))}
+                </div>
                 <input
                   value={eventMemo}
                   onChange={e => setEventMemo(e.target.value)}
@@ -484,13 +602,14 @@ function App() {
                 />
                 <button className="primary-button" type="submit">일정 저장</button>
               </form>
+              {timeError && <p className="time-error">시간을 확인해 주세요. (시 0~23, 분 0~59)</p>}
               {selectedEvents.length > 0 && (
                 <div className="event-list">
                   {selectedEvents.map(event => (
                     <div className="event-row" key={event.id}>
                       <span className="dday-badge">{formatDday(calcDday(event.date, now))}</span>
                       <div className="event-info">
-                        <strong>{event.title}</strong>
+                        <strong><span className="event-time">{formatEventTime(event.time)}</span>{event.title}</strong>
                         {event.memo && <p>{event.memo}</p>}
                       </div>
                       <button className="practice-button" onClick={() => deleteEvent(event.id)}>
@@ -515,7 +634,7 @@ function App() {
                     <div className="event-row" key={event.id}>
                       <span className="dday-badge">{formatDday(calcDday(event.date, now))}</span>
                       <div className="event-info">
-                        <strong>{event.title}</strong>
+                        <strong><span className="event-time">{formatEventTime(event.time)}</span>{event.title}</strong>
                         <p>{formatDateLabel(event.date)}{event.memo ? ` · ${event.memo}` : ""}</p>
                       </div>
                     </div>
@@ -539,7 +658,7 @@ function App() {
                     <span className="dday-badge">{formatDday(calcDday(nextEvent.date, now))}</span>
                     <div className="event-info">
                       <strong>{nextEvent.title}</strong>
-                      <p>{formatDateLabel(nextEvent.date)}</p>
+                      <p>{formatDateLabel(nextEvent.date)}{nextEvent.time ? ` ${nextEvent.time}` : ""}</p>
                     </div>
                   </div>
                 ) : (

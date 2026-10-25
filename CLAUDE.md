@@ -40,7 +40,7 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-minutes` | 누적 연습 시간 (숫자, 분) |
 | `muselog-goal` | 하루 목표 시간 (숫자, 분) |
 | `muselog-logs` | 연습 기록 배열 `[{ id, date(ISO), minutes, songTitle, note }]` |
-| `muselog-events` | 캘린더 일정 배열 `[{ id, date("YYYY-MM-DD"), title, memo }]` |
+| `muselog-events` | 캘린더 일정 배열 `[{ id, date("YYYY-MM-DD"), time("HH:MM" 또는 "" = 종일), title, memo }]` |
 
 ## 규칙
 
