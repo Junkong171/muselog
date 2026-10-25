@@ -23,11 +23,11 @@
 ```
 src/
   main.jsx    진입점
-  App.jsx     앱 전체 (탭 4개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계)
+  App.jsx     앱 전체 (탭 5개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계 / 캘린더)
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
-  lib/        순수 계산 함수와 테스트 (stats.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js)
 public/       파비콘, 아이콘
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 ```
@@ -40,6 +40,7 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-minutes` | 누적 연습 시간 (숫자, 분) |
 | `muselog-goal` | 하루 목표 시간 (숫자, 분) |
 | `muselog-logs` | 연습 기록 배열 `[{ id, date(ISO), minutes, songTitle, note }]` |
+| `muselog-events` | 캘린더 일정 배열 `[{ id, date("YYYY-MM-DD"), title, memo }]` |
 
 ## 규칙
 

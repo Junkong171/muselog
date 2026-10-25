@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import { dateKey, sumMinutesByDay, calcStreak, getWeekDays, rankSongs } from "./lib/stats";
+import {
+  getMonthGrid,
+  calcDday,
+  formatDday,
+  formatDateLabel,
+  normalizeEvents,
+  upcomingEvents,
+} from "./lib/calendar";
 
 const initialSongs = [
   { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
@@ -8,8 +16,9 @@ const initialSongs = [
   { id: 3, title: "사랑은 늘 도망가", artist: "임영웅", type: "보컬", progress: 30 },
 ];
 
-const TABS = ["대시보드", "내 연습곡", "연습 기록", "연습 통계"];
-const TAB_ICONS = ["⌂", "♫", "▤", "◔"];
+const TABS = ["대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더"];
+const TAB_ICONS = ["⌂", "♫", "▤", "◔", "▦"];
+const CAL_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function loadData(key, fallback) {
   try {
@@ -32,6 +41,14 @@ function App() {
   const [logMinutes, setLogMinutes] = useState("15");
   const [logNote, setLogNote] = useState("");
   const [logSongId, setLogSongId] = useState("");
+  const [events, setEvents] = useState(() => normalizeEvents(loadData("muselog-events", [])));
+  const [calMonth, setCalMonth] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventMemo, setEventMemo] = useState("");
 
   useEffect(() => {
     localStorage.setItem("muselog-songs", JSON.stringify(songs));
@@ -48,6 +65,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("muselog-logs", JSON.stringify(logs));
   }, [logs]);
+
+  useEffect(() => {
+    localStorage.setItem("muselog-events", JSON.stringify(events));
+  }, [events]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -101,6 +122,32 @@ function App() {
     setMinutes(current => Math.max(0, current - target.minutes));
   }
 
+  function addEvent(e) {
+    e.preventDefault();
+    if (!eventTitle.trim()) return;
+
+    setEvents(current => [
+      ...current,
+      { id: Date.now(), date: selectedDate, title: eventTitle.trim(), memo: eventMemo.trim() },
+    ]);
+    setEventTitle("");
+    setEventMemo("");
+  }
+
+  function deleteEvent(id) {
+    setEvents(current => current.filter(event => event.id !== id));
+  }
+
+  function moveMonth(offset) {
+    setCalMonth(current => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  }
+
+  function goToday() {
+    const d = new Date();
+    setCalMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+    setSelectedDate(dateKey(d));
+  }
+
   // ---------- 통계 계산 ----------
   const minutesByDay = sumMinutesByDay(logs);
 
@@ -122,6 +169,12 @@ function App() {
 
   const songStats = rankSongs(logs);
   const maxSongTotal = songStats.length ? songStats[0].total : 1;
+
+  // ---------- 캘린더 계산 ----------
+  const calCells = getMonthGrid(calMonth.getFullYear(), calMonth.getMonth());
+  const selectedEvents = events.filter(event => event.date === selectedDate);
+  const upcoming = upcomingEvents(events, now);
+  const nextEvent = upcoming[0];
 
   return (
     <div className="app-shell">
@@ -371,8 +424,130 @@ function App() {
               )}
             </section>
           </>
+        ) : activeTab === "캘린더" ? (
+          <>
+            <section className="section-heading">
+              <div>
+                <p className="eyebrow">MY SCHEDULE</p>
+                <h2>캘린더</h2>
+                <p className="section-sub">레슨, 공연 같은 일정을 적어 두고 D-DAY를 확인해 봐.</p>
+              </div>
+            </section>
+
+            <section className="chart-card">
+              <div className="cal-head">
+                <button className="cal-nav" onClick={() => moveMonth(-1)} aria-label="이전 달">‹</button>
+                <h3>{calMonth.getFullYear()}년 {calMonth.getMonth() + 1}월</h3>
+                <button className="cal-nav" onClick={() => moveMonth(1)} aria-label="다음 달">›</button>
+                <button className="cal-today-button" onClick={goToday}>오늘</button>
+              </div>
+              <div className="cal-grid">
+                {CAL_WEEKDAYS.map(label => (
+                  <span className="cal-weekday" key={label}>{label}</span>
+                ))}
+                {calCells.map((cell, i) => {
+                  if (!cell) return <span className="cal-blank" key={`blank-${i}`} />;
+                  const dayEvents = events.filter(event => event.date === cell.key);
+                  return (
+                    <button
+                      key={cell.key}
+                      className={`cal-day ${cell.key === todayKey ? "today" : ""} ${cell.key === selectedDate ? "selected" : ""}`}
+                      onClick={() => setSelectedDate(cell.key)}
+                    >
+                      <span className="cal-date">{cell.day}</span>
+                      {dayEvents.slice(0, 2).map(event => (
+                        <span className="cal-event" key={event.id}>{event.title}</span>
+                      ))}
+                      {dayEvents.length > 2 && (
+                        <span className="cal-more">+{dayEvents.length - 2}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="chart-card">
+              <div className="chart-head">
+                <h3>{formatDateLabel(selectedDate)} 일정 추가</h3>
+              </div>
+              <form className="song-form" onSubmit={addEvent}>
+                <input
+                  value={eventTitle}
+                  onChange={e => setEventTitle(e.target.value)}
+                  placeholder="일정 제목 (예: 레슨)"
+                />
+                <input
+                  value={eventMemo}
+                  onChange={e => setEventMemo(e.target.value)}
+                  placeholder="메모 (선택)"
+                />
+                <button className="primary-button" type="submit">일정 저장</button>
+              </form>
+              {selectedEvents.length > 0 && (
+                <div className="event-list">
+                  {selectedEvents.map(event => (
+                    <div className="event-row" key={event.id}>
+                      <span className="dday-badge">{formatDday(calcDday(event.date, now))}</span>
+                      <div className="event-info">
+                        <strong>{event.title}</strong>
+                        {event.memo && <p>{event.memo}</p>}
+                      </div>
+                      <button className="practice-button" onClick={() => deleteEvent(event.id)}>
+                        삭제
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="chart-card">
+              <div className="chart-head">
+                <h3>다가오는 일정</h3>
+                <span>가까운 순 최대 5개</span>
+              </div>
+              {upcoming.length === 0 ? (
+                <p className="chart-empty">다가오는 일정이 없어요.</p>
+              ) : (
+                <div className="event-list">
+                  {upcoming.map(event => (
+                    <div className="event-row" key={event.id}>
+                      <span className="dday-badge">{formatDday(calcDday(event.date, now))}</span>
+                      <div className="event-info">
+                        <strong>{event.title}</strong>
+                        <p>{formatDateLabel(event.date)}{event.memo ? ` · ${event.memo}` : ""}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
         ) : (
           <>
+            {activeTab === "대시보드" && (
+              <section className="chart-card dday-card">
+                <div className="chart-head">
+                  <h3>다가오는 D-DAY</h3>
+                  <button className="cal-today-button" onClick={() => setActiveTab("캘린더")}>
+                    캘린더 열기
+                  </button>
+                </div>
+                {nextEvent ? (
+                  <div className="event-row">
+                    <span className="dday-badge">{formatDday(calcDday(nextEvent.date, now))}</span>
+                    <div className="event-info">
+                      <strong>{nextEvent.title}</strong>
+                      <p>{formatDateLabel(nextEvent.date)}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="chart-empty">다가오는 일정이 없어요.</p>
+                )}
+              </section>
+            )}
+
             <section className="section-heading">
               <div>
                 <p className="eyebrow">YOUR REPERTOIRE</p>

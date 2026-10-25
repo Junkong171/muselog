@@ -2,6 +2,16 @@
 
 MUSELOG에서 한 일을 날짜순으로 기록한다. (최신이 위)
 
+## 2026-10-25
+
+### 캘린더와 D-DAY (브랜치 `feature/calendar`, 명세 `docs/specs/F-002-calendar.md`)
+- "캘린더" 탭 추가: 월 달력(이전/다음 달, 오늘 버튼), 날짜별 일정(제목, 메모) 추가와 삭제
+- D-DAY 표시: 오늘 "D-DAY", 앞으로 "D-n", 지난 일정 "D+n". "다가오는 일정" 목록(최대 5개)
+- 대시보드에 "다가오는 D-DAY" 카드 추가 (가장 가까운 일정 1개, "캘린더 열기" 버튼)
+- 새 localStorage 키 `muselog-events` (`[{ id, date: "YYYY-MM-DD", title, memo }]`). 기존 키는 변경 없음. 깨진 값은 빈 목록으로 처리
+- 계산 함수 `src/lib/calendar.js` 분리, 테스트 10개 추가 (`src/lib/calendar.test.js`, 전체 20개)
+- 검증: tester PASS 19 / FAIL 0, 브라우저 수동 확인 완료 (2026-10-25)
+
 ## 2026-10-23
 
 ### 하네스 2단계: 독립 검증 체계 (브랜치 `feature/tester-agent`)
