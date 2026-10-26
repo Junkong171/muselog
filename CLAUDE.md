@@ -25,10 +25,11 @@ src/
   main.jsx    진입점
   App.jsx     앱 전체 (탭 6개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계 / 캘린더 / 작업실)
   Metronome.jsx  작업실 탭의 메트로놈 (Web Audio API로 소리 재생)
+  Routine.jsx    작업실 탭의 "오늘의 루틴" 카드 (매일 체크하는 고정 연습 목록)
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, routine.js)
 public/       파비콘, 아이콘
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 ```
@@ -44,6 +45,8 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-events` | 캘린더 일정 배열 `[{ id, date("YYYY-MM-DD"), time("HH:MM" 또는 "" = 종일), title, memo }]` |
 | `muselog-song-sort` | 연습곡 정렬 기준 (문자열 `"added"` / `"title"` / `"progress"`, 없거나 깨지면 `"added"`) |
 | `muselog-metronome` | 메트로놈 설정 `{ bpm(10~300), beats(2/3/4/6), accents(강조할 박 번호 배열, 1~6), subdivision(1~4, 리듬: ♩ ♫ 셋잇단음표 ♬) }` (없거나 깨진 항목은 기본값 120 / 4 / [1] / 1, 예전 `accent: true/false`는 `[1]` / `[]`로 읽음) |
+| `muselog-routine` | 고정 연습 루틴 목록 `[{ id, title(1~40자) }]` (배열 순서 = 보이는 순서, 깨진 항목은 버림) |
+| `muselog-routine-checks` | 오늘 체크한 루틴 `{ date("YYYY-MM-DD"), done: [id] }` (date가 오늘이 아니면 체크 없음으로 읽음) |
 
 ## 규칙
 

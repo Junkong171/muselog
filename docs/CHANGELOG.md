@@ -4,6 +4,17 @@ MUSELOG에서 한 일을 날짜순으로 기록한다. (최신이 위)
 
 ## 2026-10-26
 
+### 고정 연습 루틴, 상단 날짜 (브랜치 `feature/daily-routine`, 명세 `docs/specs/F-006-daily-routine.md`)
+- 작업실 맨 위(메트로놈 위)에 "오늘의 루틴" 카드: 항목 추가(Enter/추가, 최대 40자)·체크·× 삭제, "n / m 완료"와 진행 막대, 모두 하면 "오늘 루틴 완료!" (`src/Routine.jsx`)
+- 루틴 목록은 계속 남고 체크는 그날에만 유효(날짜가 바뀌면 빈 칸으로 시작). 캘린더는 일정용으로 그대로
+- 대시보드 D-DAY 위에 루틴 요약 카드: 항목 목록과 체크(대시보드에서도 체크 가능, 추가·삭제는 작업실에서만), "작업실 열기" 버튼
+- 상단 바에 오늘 날짜를 모든 탭에서 표시. "음악이 쌓이는 시간" 배너는 대시보드에서만 보이고, 배너의 작은 제목은 "MY MUSIC SPACE"만
+- 새 localStorage 키 `muselog-routine`(목록), `muselog-routine-checks`(오늘 체크). 기존 키는 변경 없음, 깨진 값은 빈 루틴·체크 없음으로 읽음 (`normalizeRoutine`, `todayChecks`)
+- 계산 함수 `src/lib/routine.js` 분리, 테스트 13개 추가 (`src/lib/routine.test.js`, 전체 76개)
+- 빠르게 여러 번 체크하면 마지막 것만 남던 문제를 직전 상태 기준 계산으로 수정
+- 검증: tester PASS 19 / FAIL 0 / 확인 불가 1 → 화면은 사용자가 브라우저에서 확인 (2026-10-26)
+- 기타: `.claude/settings.local.json`(이 컴퓨터 전용 Claude Code 설정)을 `.gitignore`에 추가
+
 ### 작업실 탭과 메트로놈 (브랜치 `feature/workroom-metronome`, 명세 `docs/specs/F-005-workroom-metronome.md`)
 - 사이드바에 "작업실" 탭 추가(캘린더 다음). 음악 도구를 모으는 곳이고 첫 도구로 메트로놈 (`src/Metronome.jsx`)
 - 메트로놈: 빠르기 "♩ = 120" 표시, 슬라이더·−/+·숫자 직접 입력(Enter로 적용, Esc로 취소), BPM 10~300. 박자 2/3/4/6박, 탭 템포(최근 4번 간격 평균)
