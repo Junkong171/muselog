@@ -186,6 +186,19 @@ select:focus-visible {
   font-size: 12px;
 }
 
+.topbar-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+
+.topbar-date {
+  color: #5a4a8a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .profile {
   display: flex;
   align-items: center;
@@ -1487,4 +1500,124 @@ select:focus-visible {
   .metro-hint {
     text-align: left;
   }
+}
+
+/* ---------- 오늘의 루틴 ---------- */
+.routine-complete {
+  margin: 10px 0 0;
+  color: #8a74d1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.routine-list {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routine-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fcfbfe;
+}
+
+.routine-check {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 0;
+  color: #3a3055;
+  background: none;
+  font-size: 13px;
+  text-align: left;
+}
+
+.routine-box {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d6d0e3;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.routine-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routine-item.checked .routine-box {
+  border-color: var(--purple-dark);
+  background: var(--purple-dark);
+}
+
+.routine-item.checked .routine-title {
+  color: #aaa4b8;
+  text-decoration: line-through;
+}
+
+.routine-delete {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-right: 6px;
+  border: 0;
+  border-radius: 8px;
+  color: #aaa4b8;
+  background: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.routine-delete:hover {
+  color: #c0475b;
+  background: #fbeff1;
+}
+
+.routine-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.routine-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 13px;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  color: #3a3055;
+  background: #fcfbfe;
+  font-size: 12px;
+}
+
+.routine-form input::placeholder {
+  color: #aaa4b8;
+}
+
+.routine-summary-count {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: #3a3055;
+  font-size: 15px;
+}
+
+.routine-summary-count .routine-complete {
+  margin: 0;
 }

@@ -18,6 +18,8 @@ import {
 import { normalizeSongSort, SONG_SORT_OPTIONS, sortSongs } from "./lib/songs";
 import { normalizeMetronome } from "./lib/metronome";
 import Metronome from "./Metronome";
+import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
+import Routine, { RoutineChecklist } from "./Routine";
 
 const initialSongs = [
   { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
@@ -65,6 +67,9 @@ function App() {
   const [timeListFiltered, setTimeListFiltered] = useState(false);
   const [timeError, setTimeError] = useState(false);
   const [metronome, setMetronome] = useState(() => normalizeMetronome(loadData("muselog-metronome", null)));
+  const [routine, setRoutine] = useState(() => normalizeRoutine(loadData("muselog-routine", [])));
+  // { date, done } 그대로 두고, 오늘 것인지는 화면을 그릴 때 todayChecks로 판단한다
+  const [routineChecks, setRoutineChecks] = useState(() => loadData("muselog-routine-checks", null));
   const minuteInputRef = useRef(null);
 
   useEffect(() => {
@@ -94,6 +99,14 @@ function App() {
   useEffect(() => {
     localStorage.setItem("muselog-metronome", JSON.stringify(metronome));
   }, [metronome]);
+
+  useEffect(() => {
+    localStorage.setItem("muselog-routine", JSON.stringify(routine));
+  }, [routine]);
+
+  useEffect(() => {
+    localStorage.setItem("muselog-routine-checks", JSON.stringify(routineChecks));
+  }, [routineChecks]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -258,6 +271,21 @@ function App() {
     setSelectedDate(dateKey(d));
   }
 
+  function addRoutineItem(title) {
+    setRoutine(current => [...current, { id: Date.now(), title }]);
+  }
+
+  function deleteRoutineItem(id) {
+    setRoutine(current => current.filter(item => item.id !== id));
+  }
+
+  // 체크는 오늘 날짜로 저장한다. 어제 체크가 남아 있으면 todayChecks가 비워서 새로 시작한다
+  function toggleRoutineCheck(id) {
+    const key = dateKey(new Date());
+    // 빠르게 여러 번 눌러도 체크가 빠지지 않도록 직전 상태(current)에서 계산한다
+    setRoutineChecks(current => ({ date: key, done: toggleCheck(todayChecks(current, key, routine), id) }));
+  }
+
   // ---------- 통계 계산 ----------
   const minutesByDay = sumMinutesByDay(logs);
 
@@ -285,6 +313,10 @@ function App() {
   const selectedEvents = sortEvents(events.filter(event => event.date === selectedDate));
   const upcoming = upcomingEvents(events, now);
   const nextEvent = upcoming[0];
+
+  // ---------- 루틴 계산 ----------
+  const routineDone = todayChecks(routineChecks, todayKey, routine);
+  const routineStatus = routineProgress(routine, routineDone);
 
   return (
     <div className="app-shell">
@@ -318,27 +350,33 @@ function App() {
 
       <main className="main-content">
         <header className="topbar">
-          <span className="breadcrumb">Workspace / {activeTab}</span>
+          <div className="topbar-left">
+            <span className="breadcrumb">Workspace / {activeTab}</span>
+            <span className="topbar-date">{today}</span>
+          </div>
           <div className="profile">
             <div className="avatar">M</div>
             <span>My Studio</span>
           </div>
         </header>
 
-        <section className="welcome">
-          <div>
-            <p className="eyebrow">{today.toUpperCase()} · MY MUSIC SPACE</p>
-            <h1>음악이 쌓이는 시간,<br /><span>나만의 기록을 만들어 봐.</span></h1>
-            <p className="welcome-sub">
-              조금씩 연습하고, 어제보다 나아지는 나를 기록해 보세요.
-            </p>
-          </div>
-          <div className="music-art" aria-hidden="true">
-            <span className="art-circle circle-one" />
-            <span className="art-circle circle-two" />
-            <span className="art-note">♫</span>
-          </div>
-        </section>
+        {/* 배너는 대시보드에서만. 날짜는 위 상단 바에 항상 보인다 */}
+        {activeTab === "대시보드" && (
+          <section className="welcome">
+            <div>
+              <p className="eyebrow">MY MUSIC SPACE</p>
+              <h1>음악이 쌓이는 시간,<br /><span>나만의 기록을 만들어 봐.</span></h1>
+              <p className="welcome-sub">
+                조금씩 연습하고, 어제보다 나아지는 나를 기록해 보세요.
+              </p>
+            </div>
+            <div className="music-art" aria-hidden="true">
+              <span className="art-circle circle-one" />
+              <span className="art-circle circle-two" />
+              <span className="art-note">♫</span>
+            </div>
+          </section>
+        )}
 
         <section className="stats-grid">
           <div className="stat-card">
@@ -671,6 +709,14 @@ function App() {
               </div>
             </section>
 
+            <Routine
+              items={routine}
+              done={routineDone}
+              onAdd={addRoutineItem}
+              onToggle={toggleRoutineCheck}
+              onDelete={deleteRoutineItem}
+            />
+
             <Metronome
               settings={metronome}
               onChangeSettings={setMetronome}
@@ -681,6 +727,35 @@ function App() {
           </>
         ) : (
           <>
+            {activeTab === "대시보드" && (
+              <section className="chart-card routine-summary">
+                <div className="chart-head">
+                  <h3>오늘의 루틴</h3>
+                  <button className="cal-today-button" onClick={() => setActiveTab("작업실")}>
+                    작업실 열기
+                  </button>
+                </div>
+                {routineStatus.total === 0 ? (
+                  <p className="chart-empty">아직 루틴이 없어요.</p>
+                ) : (
+                  <>
+                    <div className="routine-summary-count">
+                      <strong>{routineStatus.done} / {routineStatus.total} 완료</strong>
+                      {routineStatus.complete && <span className="routine-complete">오늘 루틴 완료!</span>}
+                    </div>
+                    <div className="progress-track">
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${(routineStatus.done / routineStatus.total) * 100}%` }}
+                      />
+                    </div>
+                    {/* 추가·삭제는 작업실에서만, 여기서는 체크만 */}
+                    <RoutineChecklist items={routine} done={routineDone} onToggle={toggleRoutineCheck} />
+                  </>
+                )}
+              </section>
+            )}
+
             {activeTab === "대시보드" && (
               <section className="chart-card dday-card">
                 <div className="chart-head">
