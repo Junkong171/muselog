@@ -4,6 +4,16 @@ MUSELOG에서 한 일을 날짜순으로 기록한다. (최신이 위)
 
 ## 2026-10-26
 
+### 작업실 탭과 메트로놈 (브랜치 `feature/workroom-metronome`, 명세 `docs/specs/F-005-workroom-metronome.md`)
+- 사이드바에 "작업실" 탭 추가(캘린더 다음). 음악 도구를 모으는 곳이고 첫 도구로 메트로놈 (`src/Metronome.jsx`)
+- 메트로놈: 빠르기 "♩ = 120" 표시, 슬라이더·−/+·숫자 직접 입력(Enter로 적용, Esc로 취소), BPM 10~300. 박자 2/3/4/6박, 탭 템포(최근 4번 간격 평균)
+- 박 버튼을 눌러 강조할 박을 고름(여러 개 또는 없음, 강조는 박의 첫 소리에만). 리듬 ♩ / ♫ / 셋잇단음표(악보 기호 그림) / ♬로 박 사이 작은 소리 추가
+- 소리는 Web Audio API로 미리 예약해 재생(새 라이브러리 없음). 창이 뒤에 있어 타이머가 느려져도 박이 몰리지 않게 예약 거리를 늘림. 재생 중 설정 변경은 다음 박부터, 박자를 줄이면 1번 박부터
+- 이번 연습 시간(분:초)을 곡과 함께 "연습 기록에 저장"(1분 이상, 메모에 BPM·박자·리듬). 연습 기록 탭과 같은 저장 함수(`recordPractice`)를 써서 대시보드·통계에 똑같이 반영
+- 설정은 새 localStorage 키 `muselog-metronome` `{ bpm, beats, accents, subdivision }`. 없거나 깨진 항목은 기본값, 예전 `accent: true/false`는 `accents: [1]` / `[]`로 바꿔 읽음 (`normalizeMetronome`). 기존 키는 변경 없음
+- 계산 함수 `src/lib/metronome.js` 분리, 테스트 22개 추가 (`src/lib/metronome.test.js`, 전체 63개)
+- 검증: tester PASS 25 / FAIL 0 / 확인 불가 3 → 소리·화면은 사용자가 브라우저에서 확인 완료 (2026-10-26)
+
 ### 연습곡 목록 정렬 (브랜치 `feature/song-sort`, 명세 `docs/specs/F-004-song-sort.md`)
 - 연습곡 목록 위에 정렬 선택 추가: 추가한 순(기본) / 제목순(가나다) / 진행률순(높은 순, 같으면 제목순)
 - 보이는 순서만 바뀌고 저장 데이터(`muselog-songs`)는 그대로. 표지 그림은 곡을 따라감

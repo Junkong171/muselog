@@ -16,6 +16,8 @@ import {
   upcomingEvents,
 } from "./lib/calendar";
 import { normalizeSongSort, SONG_SORT_OPTIONS, sortSongs } from "./lib/songs";
+import { normalizeMetronome } from "./lib/metronome";
+import Metronome from "./Metronome";
 
 const initialSongs = [
   { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
@@ -23,8 +25,8 @@ const initialSongs = [
   { id: 3, title: "사랑은 늘 도망가", artist: "임영웅", type: "보컬", progress: 30 },
 ];
 
-const TABS = ["대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더"];
-const TAB_ICONS = ["⌂", "♫", "▤", "◔", "▦"];
+const TABS = ["대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더", "작업실"];
+const TAB_ICONS = ["⌂", "♫", "▤", "◔", "▦", "◈"];
 const CAL_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function loadData(key, fallback) {
@@ -62,6 +64,7 @@ function App() {
   const [openTimeList, setOpenTimeList] = useState(null); // "hour" | "minute" | null
   const [timeListFiltered, setTimeListFiltered] = useState(false);
   const [timeError, setTimeError] = useState(false);
+  const [metronome, setMetronome] = useState(() => normalizeMetronome(loadData("muselog-metronome", null)));
   const minuteInputRef = useRef(null);
 
   useEffect(() => {
@@ -88,6 +91,10 @@ function App() {
     localStorage.setItem("muselog-song-sort", JSON.stringify(songSort));
   }, [songSort]);
 
+  useEffect(() => {
+    localStorage.setItem("muselog-metronome", JSON.stringify(metronome));
+  }, [metronome]);
+
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
     day: "numeric",
@@ -113,23 +120,28 @@ function App() {
     setShowForm(false);
   }
 
-  function addPracticeLog(e) {
-    e.preventDefault();
-    const duration = Number(logMinutes);
-    if (!Number.isFinite(duration) || duration < 1) return;
-
-    const song = songs.find(s => String(s.id) === logSongId);
+  // 연습 기록 탭과 작업실 메트로놈이 함께 쓰는 기록 저장
+  function recordPractice(duration, songId, note) {
+    const song = songs.find(s => String(s.id) === songId);
 
     const log = {
       id: Date.now(),
       date: new Date().toISOString(),
       minutes: duration,
       songTitle: song ? song.title : "",
-      note: logNote.trim() || "연습 내용 미입력",
+      note,
     };
 
     setLogs(current => [log, ...current]);
     setMinutes(current => current + duration);
+  }
+
+  function addPracticeLog(e) {
+    e.preventDefault();
+    const duration = Number(logMinutes);
+    if (!Number.isFinite(duration) || duration < 1) return;
+
+    recordPractice(duration, logSongId, logNote.trim() || "연습 내용 미입력");
     setLogNote("");
   }
 
@@ -648,6 +660,24 @@ function App() {
                 </div>
               )}
             </section>
+          </>
+        ) : activeTab === "작업실" ? (
+          <>
+            <section className="section-heading">
+              <div>
+                <p className="eyebrow">MUSIC TOOLS</p>
+                <h2>작업실</h2>
+                <p className="section-sub">연습에 필요한 도구를 꺼내 써 봐.</p>
+              </div>
+            </section>
+
+            <Metronome
+              settings={metronome}
+              onChangeSettings={setMetronome}
+              songs={songs}
+              onSaveLog={recordPractice}
+            />
+            <p className="chart-empty">튜너 등 다른 도구는 곧 추가될 예정이에요.</p>
           </>
         ) : (
           <>
