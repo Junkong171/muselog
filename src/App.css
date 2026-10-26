@@ -1260,3 +1260,231 @@ select:focus-visible {
   font-size: 12px;
   font-weight: 600;
 }
+
+/* ---------- 작업실 (메트로놈) ---------- */
+.metro-bpm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.metro-bpm-value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 110px;
+}
+
+.metro-bpm-value strong {
+  color: #3a3055;
+  font-size: 48px;
+  line-height: 1;
+}
+
+.metro-bpm-input {
+  padding: 0;
+  border: 0;
+  border-bottom: 2px dashed transparent;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  outline: none;
+}
+
+.metro-bpm-input:hover {
+  border-bottom-color: var(--purple-light);
+}
+
+.metro-bpm-input:focus {
+  border-bottom-color: var(--purple-dark);
+}
+
+.metro-note {
+  color: var(--purple-dark);
+  font-size: 40px;
+}
+
+.metro-rhythm {
+  margin-top: 12px;
+}
+
+.metro-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.metro-beats button.note {
+  min-width: 38px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.metro-slider {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  margin: 18px auto 0;
+  accent-color: var(--purple-dark);
+}
+
+.metro-beat-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.metro-beat {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid #e2dcf0;
+  border-radius: 50%;
+  color: #aaa4b8;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background 0.05s, transform 0.05s;
+}
+
+.metro-beat:hover {
+  border-color: var(--purple);
+}
+
+.metro-beat.accented {
+  border-color: var(--purple-dark);
+  color: #5a4a8a;
+  background: var(--purple-light);
+}
+
+.metro-beat.on {
+  border-color: var(--purple);
+  color: #fff;
+  background: var(--purple);
+  transform: scale(1.15);
+}
+
+.metro-beat.accented.on {
+  border-color: #8574b8;
+  background: #8574b8;
+}
+
+.metro-hint.metro-beat-hint {
+  margin: 10px 0 18px;
+  text-align: center;
+}
+
+.triplet-icon {
+  display: block;
+}
+
+.metro-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.metro-beats {
+  display: flex;
+  gap: 6px;
+}
+
+.metro-beats button {
+  padding: 7px 12px;
+  border: 1px solid #e2dcf0;
+  border-radius: 9px;
+  color: #5a4a8a;
+  background: #f4f1fa;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.metro-beats button:hover {
+  background: #e9e2f6;
+}
+
+.metro-beats button.active {
+  border-color: var(--purple-dark);
+  color: #fff;
+  background: var(--purple-dark);
+}
+
+.metro-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.metro-actions .primary-button {
+  min-width: 96px;
+}
+
+.metro-log {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.metro-elapsed {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metro-elapsed strong {
+  color: #3a3055;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metro-log select {
+  padding: 10px 12px;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  color: #3a3055;
+  background: #fcfbfe;
+  font-size: 12px;
+}
+
+.metro-log .primary-button:disabled {
+  border-color: #d6d0e3;
+  background: #d6d0e3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.metro-hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+@media (max-width: 700px) {
+  .metro-elapsed {
+    width: 100%;
+  }
+
+  .metro-log select {
+    flex: 1 1 140px;
+  }
+
+  .metro-hint {
+    text-align: left;
+  }
+}
