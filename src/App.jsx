@@ -15,6 +15,7 @@ import {
   sortEvents,
   upcomingEvents,
 } from "./lib/calendar";
+import { normalizeSongSort, SONG_SORT_OPTIONS, sortSongs } from "./lib/songs";
 
 const initialSongs = [
   { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
@@ -43,6 +44,7 @@ function App() {
   const [newTitle, setNewTitle] = useState("");
   const [newArtist, setNewArtist] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [songSort, setSongSort] = useState(() => normalizeSongSort(loadData("muselog-song-sort", "added")));
   const [activeTab, setActiveTab] = useState("대시보드");
   const [logMinutes, setLogMinutes] = useState("15");
   const [logNote, setLogNote] = useState("");
@@ -81,6 +83,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("muselog-events", JSON.stringify(events));
   }, [events]);
+
+  useEffect(() => {
+    localStorage.setItem("muselog-song-sort", JSON.stringify(songSort));
+  }, [songSort]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -702,33 +708,49 @@ function App() {
                 <p>좋아하는 노래부터 시작하면 돼요.</p>
               </div>
             ) : (
-              <div className="song-list">
-                {songs.map((song, i) => (
-                  <article className="song-card" key={song.id}>
-                    <div className={`song-cover cover-${i % 4}`}>
-                      {["♫", "♪", "♬", "♩"][i % 4]}
-                    </div>
-                    <div className="song-info">
-                      <h3>{song.title}</h3>
-                      <p>{song.artist} <span>·</span> {song.type}</p>
-                      <div className="song-progress">
-                        <div className="progress-track">
-                          <div className="progress-fill" style={{ width: `${song.progress}%` }} />
-                        </div>
-                        <span>{song.progress}%</span>
-                      </div>
-                    </div>
-                    <button
-                      className="practice-button"
-                      onClick={() => setSongs(current => current.map(s =>
-                        s.id === song.id ? { ...s, progress: Math.min(s.progress + 10, 100) } : s
+              <>
+                <div className="song-sort">
+                  <label>
+                    정렬
+                    <select value={songSort} onChange={e => setSongSort(e.target.value)}>
+                      {SONG_SORT_OPTIONS.map(option => (
+                        <option key={option.key} value={option.key}>{option.label}</option>
                       ))}
-                    >
-                      진도 +10%
-                    </button>
-                  </article>
-                ))}
-              </div>
+                    </select>
+                  </label>
+                </div>
+                <div className="song-list">
+                  {sortSongs(songs, songSort).map(song => {
+                    // 표지는 추가한 순서로 정해 두어 정렬을 바꿔도 곡을 따라간다
+                    const cover = songs.indexOf(song) % 4;
+                    return (
+                      <article className="song-card" key={song.id}>
+                        <div className={`song-cover cover-${cover}`}>
+                          {["♫", "♪", "♬", "♩"][cover]}
+                        </div>
+                        <div className="song-info">
+                          <h3>{song.title}</h3>
+                          <p>{song.artist} <span>·</span> {song.type}</p>
+                          <div className="song-progress">
+                            <div className="progress-track">
+                              <div className="progress-fill" style={{ width: `${song.progress}%` }} />
+                            </div>
+                            <span>{song.progress}%</span>
+                          </div>
+                        </div>
+                        <button
+                          className="practice-button"
+                          onClick={() => setSongs(current => current.map(s =>
+                            s.id === song.id ? { ...s, progress: Math.min(s.progress + 10, 100) } : s
+                          ))}
+                        >
+                          진도 +10%
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </>
         )}

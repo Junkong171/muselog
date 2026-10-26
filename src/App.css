@@ -468,6 +468,29 @@ select:focus-visible {
   font-size: 12px;
 }
 
+.song-sort {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.song-sort label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.song-sort select {
+  padding: 6px 10px;
+  border: 1px solid #e4dfee;
+  border-radius: 8px;
+  color: #4f4668;
+  background: #faf8fd;
+  font-size: 11px;
+}
+
 .song-list {
   display: grid;
   gap: 12px;

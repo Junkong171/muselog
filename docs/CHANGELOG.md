@@ -2,6 +2,15 @@
 
 MUSELOG에서 한 일을 날짜순으로 기록한다. (최신이 위)
 
+## 2026-10-26
+
+### 연습곡 목록 정렬 (브랜치 `feature/song-sort`, 명세 `docs/specs/F-004-song-sort.md`)
+- 연습곡 목록 위에 정렬 선택 추가: 추가한 순(기본) / 제목순(가나다) / 진행률순(높은 순, 같으면 제목순)
+- 보이는 순서만 바뀌고 저장 데이터(`muselog-songs`)는 그대로. 표지 그림은 곡을 따라감
+- 고른 정렬 기준은 새 localStorage 키 `muselog-song-sort`에 저장되어 새로고침해도 유지. 기존 키는 변경 없음, 값이 없거나 깨지면 추가한 순 (`normalizeSongSort`)
+- 정렬 함수 `src/lib/songs.js` 분리, 테스트 9개 추가 (`src/lib/songs.test.js`, 전체 41개)
+- 검증: tester PASS 12 / FAIL 0, 브라우저 수동 확인 완료 (2026-10-26)
+
 ## 2026-10-25
 
 ### 캘린더 일정 시간 선택 (브랜치 `feature/calendar`, 명세 `docs/specs/F-003-event-time.md`)
