@@ -1,6 +1,21 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import "./App.css";
 import { dateKey, sumMinutesByDay, calcStreak, getWeekDays, rankSongs } from "./lib/stats";
+import {
+  getMonthGrid,
+  calcDday,
+  combineTime,
+  filterOptions,
+  formatDday,
+  formatDateLabel,
+  formatEventTime,
+  HOUR_OPTIONS,
+  MINUTE_OPTIONS,
+  normalizeEvents,
+  sortEvents,
+  upcomingEvents,
+} from "./lib/calendar";
+import { normalizeSongSort, SONG_SORT_OPTIONS, sortSongs } from "./lib/songs";
 
 const initialSongs = [
   { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
@@ -8,8 +23,9 @@ const initialSongs = [
   { id: 3, title: "사랑은 늘 도망가", artist: "임영웅", type: "보컬", progress: 30 },
 ];
 
-const TABS = ["대시보드", "내 연습곡", "연습 기록", "연습 통계"];
-const TAB_ICONS = ["⌂", "♫", "▤", "◔"];
+const TABS = ["대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더"];
+const TAB_ICONS = ["⌂", "♫", "▤", "◔", "▦"];
+const CAL_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function loadData(key, fallback) {
   try {
@@ -28,10 +44,25 @@ function App() {
   const [newTitle, setNewTitle] = useState("");
   const [newArtist, setNewArtist] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [songSort, setSongSort] = useState(() => normalizeSongSort(loadData("muselog-song-sort", "added")));
   const [activeTab, setActiveTab] = useState("대시보드");
   const [logMinutes, setLogMinutes] = useState("15");
   const [logNote, setLogNote] = useState("");
   const [logSongId, setLogSongId] = useState("");
+  const [events, setEvents] = useState(() => normalizeEvents(loadData("muselog-events", [])));
+  const [calMonth, setCalMonth] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventMemo, setEventMemo] = useState("");
+  const [eventHour, setEventHour] = useState("");
+  const [eventMinute, setEventMinute] = useState("");
+  const [openTimeList, setOpenTimeList] = useState(null); // "hour" | "minute" | null
+  const [timeListFiltered, setTimeListFiltered] = useState(false);
+  const [timeError, setTimeError] = useState(false);
+  const minuteInputRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem("muselog-songs", JSON.stringify(songs));
@@ -48,6 +79,14 @@ function App() {
   useEffect(() => {
     localStorage.setItem("muselog-logs", JSON.stringify(logs));
   }, [logs]);
+
+  useEffect(() => {
+    localStorage.setItem("muselog-events", JSON.stringify(events));
+  }, [events]);
+
+  useEffect(() => {
+    localStorage.setItem("muselog-song-sort", JSON.stringify(songSort));
+  }, [songSort]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -101,6 +140,112 @@ function App() {
     setMinutes(current => Math.max(0, current - target.minutes));
   }
 
+  function addEvent(e) {
+    e.preventDefault();
+    if (!eventTitle.trim()) return;
+
+    const time = combineTime(eventHour, eventMinute);
+    if (time === null) {
+      setTimeError(true);
+      return;
+    }
+
+    setEvents(current => [
+      ...current,
+      { id: Date.now(), date: selectedDate, time, title: eventTitle.trim(), memo: eventMemo.trim() },
+    ]);
+    setEventTitle("");
+    setEventMemo("");
+    setEventHour("");
+    setEventMinute("");
+    setOpenTimeList(null);
+    setTimeError(false);
+  }
+
+  // 칸을 누르면 걸러지지 않은 목록 전체를 연다 (지금 값은 강조)
+  function showTimeList(which) {
+    setOpenTimeList(which);
+    setTimeListFiltered(false);
+  }
+
+  function typeTime(which, text) {
+    const digits = text.replace(/\D/g, "").slice(0, 2);
+    if (which === "hour") {
+      setEventHour(digits);
+      if (digits.length === 2) {
+        minuteInputRef.current?.focus();
+        return;
+      }
+    } else {
+      setEventMinute(digits);
+    }
+    setOpenTimeList(which);
+    setTimeListFiltered(true);
+  }
+
+  function pickTime(which, value) {
+    if (which === "hour") {
+      setEventHour(value);
+      if (!value) setEventMinute("");
+    } else {
+      setEventMinute(value);
+    }
+    setOpenTimeList(null);
+    setTimeError(false);
+  }
+
+  function renderTimeList(which) {
+    if (openTimeList !== which) return null;
+    const value = which === "hour" ? eventHour : eventMinute;
+    const allOptions = which === "hour" ? HOUR_OPTIONS : MINUTE_OPTIONS;
+    const options = timeListFiltered ? filterOptions(allOptions, value) : allOptions;
+    const showAllDay = which === "hour" && (!timeListFiltered || !value);
+    if (options.length === 0 && !showAllDay) return null;
+    const current = value ? value.padStart(2, "0") : "";
+
+    return (
+      <ul className="time-list" role="listbox">
+        {/* onMouseDown preventDefault: 누르는 순간 칸의 포커스가 빠져 목록이 먼저 닫히지 않게 */}
+        {showAllDay && (
+          <li>
+            <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => pickTime("hour", "")}>
+              종일
+            </button>
+          </li>
+        )}
+        {options.map(option => (
+          <li key={option}>
+            <button
+              type="button"
+              className={option === current ? "active" : ""}
+              ref={el => {
+                if (option === current) el?.scrollIntoView({ block: "nearest" });
+              }}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => pickTime(which, option)}
+            >
+              {option}
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  function deleteEvent(id) {
+    setEvents(current => current.filter(event => event.id !== id));
+  }
+
+  function moveMonth(offset) {
+    setCalMonth(current => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  }
+
+  function goToday() {
+    const d = new Date();
+    setCalMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+    setSelectedDate(dateKey(d));
+  }
+
   // ---------- 통계 계산 ----------
   const minutesByDay = sumMinutesByDay(logs);
 
@@ -122,6 +267,12 @@ function App() {
 
   const songStats = rankSongs(logs);
   const maxSongTotal = songStats.length ? songStats[0].total : 1;
+
+  // ---------- 캘린더 계산 ----------
+  const calCells = getMonthGrid(calMonth.getFullYear(), calMonth.getMonth());
+  const selectedEvents = sortEvents(events.filter(event => event.date === selectedDate));
+  const upcoming = upcomingEvents(events, now);
+  const nextEvent = upcoming[0];
 
   return (
     <div className="app-shell">
@@ -371,8 +522,157 @@ function App() {
               )}
             </section>
           </>
+        ) : activeTab === "캘린더" ? (
+          <>
+            <section className="section-heading">
+              <div>
+                <p className="eyebrow">MY SCHEDULE</p>
+                <h2>캘린더</h2>
+                <p className="section-sub">레슨, 공연 같은 일정을 적어 두고 D-DAY를 확인해 봐.</p>
+              </div>
+            </section>
+
+            <section className="chart-card">
+              <div className="cal-head">
+                <button className="cal-nav" onClick={() => moveMonth(-1)} aria-label="이전 달">‹</button>
+                <h3>{calMonth.getFullYear()}년 {calMonth.getMonth() + 1}월</h3>
+                <button className="cal-nav" onClick={() => moveMonth(1)} aria-label="다음 달">›</button>
+                <button className="cal-today-button" onClick={goToday}>오늘</button>
+              </div>
+              <div className="cal-grid">
+                {CAL_WEEKDAYS.map(label => (
+                  <span className="cal-weekday" key={label}>{label}</span>
+                ))}
+                {calCells.map((cell, i) => {
+                  if (!cell) return <span className="cal-blank" key={`blank-${i}`} />;
+                  const dayEvents = sortEvents(events.filter(event => event.date === cell.key));
+                  return (
+                    <button
+                      key={cell.key}
+                      className={`cal-day ${cell.key === todayKey ? "today" : ""} ${cell.key === selectedDate ? "selected" : ""}`}
+                      onClick={() => setSelectedDate(cell.key)}
+                    >
+                      <span className="cal-date">{cell.day}</span>
+                      {dayEvents.slice(0, 2).map(event => (
+                        <span className="cal-event" key={event.id}>
+                          {event.time ? `${event.time} ` : ""}{event.title}
+                        </span>
+                      ))}
+                      {dayEvents.length > 2 && (
+                        <span className="cal-more">+{dayEvents.length - 2}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="chart-card">
+              <div className="chart-head">
+                <h3>{formatDateLabel(selectedDate)} 일정 추가</h3>
+              </div>
+              <form className="song-form" onSubmit={addEvent}>
+                <input
+                  value={eventTitle}
+                  onChange={e => setEventTitle(e.target.value)}
+                  placeholder="일정 제목 (예: 레슨)"
+                />
+                <div className="time-field" role="group" aria-label="시간 (비우면 종일)">
+                  {["hour", "minute"].map(which => (
+                    <Fragment key={which}>
+                      {which === "minute" && <span className="time-colon">:</span>}
+                      <div className="time-combo">
+                        <input
+                          ref={which === "minute" ? minuteInputRef : null}
+                          value={which === "hour" ? eventHour : eventMinute}
+                          onChange={e => typeTime(which, e.target.value)}
+                          onFocus={() => showTimeList(which)}
+                          onClick={() => showTimeList(which)}
+                          onBlur={() => setOpenTimeList(null)}
+                          onKeyDown={e => e.key === "Escape" && setOpenTimeList(null)}
+                          placeholder={which === "hour" ? "시" : "분"}
+                          aria-label={which === "hour" ? "시" : "분"}
+                          inputMode="numeric"
+                          maxLength={2}
+                          autoComplete="off"
+                        />
+                        {renderTimeList(which)}
+                      </div>
+                    </Fragment>
+                  ))}
+                </div>
+                <input
+                  value={eventMemo}
+                  onChange={e => setEventMemo(e.target.value)}
+                  placeholder="메모 (선택)"
+                />
+                <button className="primary-button" type="submit">일정 저장</button>
+              </form>
+              {timeError && <p className="time-error">시간을 확인해 주세요. (시 0~23, 분 0~59)</p>}
+              {selectedEvents.length > 0 && (
+                <div className="event-list">
+                  {selectedEvents.map(event => (
+                    <div className="event-row" key={event.id}>
+                      <span className="dday-badge">{formatDday(calcDday(event.date, now))}</span>
+                      <div className="event-info">
+                        <strong><span className="event-time">{formatEventTime(event.time)}</span>{event.title}</strong>
+                        {event.memo && <p>{event.memo}</p>}
+                      </div>
+                      <button className="practice-button" onClick={() => deleteEvent(event.id)}>
+                        삭제
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="chart-card">
+              <div className="chart-head">
+                <h3>다가오는 일정</h3>
+                <span>가까운 순 최대 5개</span>
+              </div>
+              {upcoming.length === 0 ? (
+                <p className="chart-empty">다가오는 일정이 없어요.</p>
+              ) : (
+                <div className="event-list">
+                  {upcoming.map(event => (
+                    <div className="event-row" key={event.id}>
+                      <span className="dday-badge">{formatDday(calcDday(event.date, now))}</span>
+                      <div className="event-info">
+                        <strong><span className="event-time">{formatEventTime(event.time)}</span>{event.title}</strong>
+                        <p>{formatDateLabel(event.date)}{event.memo ? ` · ${event.memo}` : ""}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
         ) : (
           <>
+            {activeTab === "대시보드" && (
+              <section className="chart-card dday-card">
+                <div className="chart-head">
+                  <h3>다가오는 D-DAY</h3>
+                  <button className="cal-today-button" onClick={() => setActiveTab("캘린더")}>
+                    캘린더 열기
+                  </button>
+                </div>
+                {nextEvent ? (
+                  <div className="event-row">
+                    <span className="dday-badge">{formatDday(calcDday(nextEvent.date, now))}</span>
+                    <div className="event-info">
+                      <strong>{nextEvent.title}</strong>
+                      <p>{formatDateLabel(nextEvent.date)}{nextEvent.time ? ` ${nextEvent.time}` : ""}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="chart-empty">다가오는 일정이 없어요.</p>
+                )}
+              </section>
+            )}
+
             <section className="section-heading">
               <div>
                 <p className="eyebrow">YOUR REPERTOIRE</p>
@@ -408,33 +708,49 @@ function App() {
                 <p>좋아하는 노래부터 시작하면 돼요.</p>
               </div>
             ) : (
-              <div className="song-list">
-                {songs.map((song, i) => (
-                  <article className="song-card" key={song.id}>
-                    <div className={`song-cover cover-${i % 4}`}>
-                      {["♫", "♪", "♬", "♩"][i % 4]}
-                    </div>
-                    <div className="song-info">
-                      <h3>{song.title}</h3>
-                      <p>{song.artist} <span>·</span> {song.type}</p>
-                      <div className="song-progress">
-                        <div className="progress-track">
-                          <div className="progress-fill" style={{ width: `${song.progress}%` }} />
-                        </div>
-                        <span>{song.progress}%</span>
-                      </div>
-                    </div>
-                    <button
-                      className="practice-button"
-                      onClick={() => setSongs(current => current.map(s =>
-                        s.id === song.id ? { ...s, progress: Math.min(s.progress + 10, 100) } : s
+              <>
+                <div className="song-sort">
+                  <label>
+                    정렬
+                    <select value={songSort} onChange={e => setSongSort(e.target.value)}>
+                      {SONG_SORT_OPTIONS.map(option => (
+                        <option key={option.key} value={option.key}>{option.label}</option>
                       ))}
-                    >
-                      진도 +10%
-                    </button>
-                  </article>
-                ))}
-              </div>
+                    </select>
+                  </label>
+                </div>
+                <div className="song-list">
+                  {sortSongs(songs, songSort).map(song => {
+                    // 표지는 추가한 순서로 정해 두어 정렬을 바꿔도 곡을 따라간다
+                    const cover = songs.indexOf(song) % 4;
+                    return (
+                      <article className="song-card" key={song.id}>
+                        <div className={`song-cover cover-${cover}`}>
+                          {["♫", "♪", "♬", "♩"][cover]}
+                        </div>
+                        <div className="song-info">
+                          <h3>{song.title}</h3>
+                          <p>{song.artist} <span>·</span> {song.type}</p>
+                          <div className="song-progress">
+                            <div className="progress-track">
+                              <div className="progress-fill" style={{ width: `${song.progress}%` }} />
+                            </div>
+                            <span>{song.progress}%</span>
+                          </div>
+                        </div>
+                        <button
+                          className="practice-button"
+                          onClick={() => setSongs(current => current.map(s =>
+                            s.id === song.id ? { ...s, progress: Math.min(s.progress + 10, 100) } : s
+                          ))}
+                        >
+                          진도 +10%
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </>
         )}

@@ -468,6 +468,29 @@ select:focus-visible {
   font-size: 12px;
 }
 
+.song-sort {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.song-sort label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.song-sort select {
+  padding: 6px 10px;
+  border: 1px solid #e4dfee;
+  border-radius: 8px;
+  color: #4f4668;
+  background: #faf8fd;
+  font-size: 11px;
+}
+
 .song-list {
   display: grid;
   gap: 12px;
@@ -977,4 +1000,263 @@ select:focus-visible {
   .week-labels {
     gap: 6px;
   }
+}
+/* ---------- 캘린더 ---------- */
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cal-head h3 {
+  min-width: 110px;
+  margin: 0;
+  color: #3a3055;
+  font-size: 15px;
+  text-align: center;
+}
+
+.cal-nav {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #e2dcf0;
+  border-radius: 9px;
+  color: #5a4a8a;
+  background: #f4f1fa;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.cal-today-button {
+  margin-left: auto;
+  padding: 7px 12px;
+  border: 1px solid #e2dcf0;
+  border-radius: 9px;
+  color: #5a4a8a;
+  background: #f4f1fa;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cal-nav:hover,
+.cal-today-button:hover {
+  background: #e9e2f6;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cal-weekday {
+  padding-bottom: 4px;
+  color: #9a94a8;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.cal-day {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  min-height: 74px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: #3a3055;
+  background: #fff;
+  text-align: left;
+}
+
+.cal-day:hover {
+  background: var(--cream);
+}
+
+.cal-day.today {
+  background: #f0ebfa;
+}
+
+.cal-day.today .cal-date {
+  color: #fff;
+  background: var(--purple);
+}
+
+.cal-day.selected {
+  border-color: #8a74d1;
+  box-shadow: 0 0 0 1px #8a74d1;
+}
+
+.cal-date {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cal-event {
+  overflow: hidden;
+  padding: 2px 5px;
+  border-radius: 5px;
+  color: #5a4a8a;
+  background: var(--purple-light);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-more {
+  color: #8a74d1;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.dday-card .event-list,
+.dday-card .event-row {
+  margin-top: 0;
+}
+
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.dday-badge {
+  flex-shrink: 0;
+  min-width: 58px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: #fff;
+  background: #8a74d1;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.event-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-info strong {
+  color: #3a3055;
+  font-size: 13px;
+}
+
+.event-info p {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .cal-grid {
+    gap: 3px;
+  }
+
+  .cal-day {
+    min-height: 54px;
+    padding: 4px;
+  }
+
+  .cal-event {
+    padding: 1px 3px;
+    font-size: 9px;
+  }
+}
+
+.event-time {
+  margin-right: 8px;
+  color: #8a74d1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.time-field {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.time-colon {
+  color: #5a4a8a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.time-combo {
+  position: relative;
+  width: 58px;
+}
+
+.time-combo input {
+  width: 100%;
+  text-align: center;
+}
+
+.time-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  max-height: 222px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(45, 38, 64, 0.12);
+  list-style: none;
+}
+
+.time-list button {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  color: #3a3055;
+  background: none;
+  font-size: 12px;
+  text-align: center;
+}
+
+.time-list button:hover {
+  background: #f4f1fa;
+}
+
+.time-list button.active {
+  color: #5a4a8a;
+  background: var(--purple-light);
+  font-weight: 700;
+}
+
+.time-error {
+  margin: -8px 0 12px;
+  color: #c0475b;
+  font-size: 12px;
+  font-weight: 600;
 }
