@@ -175,10 +175,29 @@ select:focus-visible {
 
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 10px 16px;
   min-height: 78px;
   border-bottom: 1px solid var(--border);
+}
+
+.topbar-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.backup-actions .cal-today-button {
+  margin-left: 0;
 }
 
 .breadcrumb {
@@ -804,6 +823,7 @@ select:focus-visible {
 
   .topbar {
     min-height: 58px;
+    padding: 10px 0;
   }
 
   .welcome {

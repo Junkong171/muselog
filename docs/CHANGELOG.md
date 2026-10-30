@@ -4,6 +4,14 @@ MUSELOG에서 한 일을 날짜순으로 기록한다. (최신이 위)
 
 ## 2026-10-30
 
+### 기록 백업 내보내기 / 불러오기 (브랜치 `feature/data-backup`, 명세 `docs/specs/F-008-data-backup.md`)
+- 상단 바에 "백업 내보내기"·"백업 불러오기" 버튼 (모든 탭)
+- 내보내기: 9개 기록 키를 `muselog-backup-YYYY-MM-DD.json` 파일 하나로 내려받기. 형식 `{ app: "muselog", version: 1, exportedAt, data }`
+- 불러오기: 확인 창에서 확인한 경우에만 백업 시점 그대로 바꾸고 새로고침(예전 형식도 기존 normalize 함수로 읽힘). 잘못된 파일·새 버전 파일은 안내만 하고 그대로. MUSELOG 밖의 키는 건드리지 않음
+- 묶기/풀기 함수 `src/lib/backup.js` (`buildBackup`, `parseBackup`, `planRestore`), 테스트 11개 추가 (전체 96개). 나중에 로그인·서버 저장에서 같은 형식을 다시 씀
+- 새 키를 만들면 `BACKUP_KEYS`에도 넣도록 CLAUDE.md에 적음
+- 검증: tester PASS 9 / FAIL 0 / 확인 불가 4 → 파일 고르기 창은 사용자가 확인, 휴대폰 너비·불러오기 후 화면은 브라우저 확인. tester 제안대로 다운로드 주소를 늦게 지우고(Firefox·Safari 대비) 좁은 화면에서 버튼 줄바꿈 (2026-10-30)
+
 ### 연습곡 목적과 파트 (브랜치 `feature/song-purpose`, 명세 `docs/specs/F-007-song-purpose.md`)
 - 곡 추가 폼에 파트 선택(보컬/기타/피아노/베이스/드럼/작곡/그 외, 기본 보컬)과 목적 칸(선택, 최대 30자, 예시: 공연·축가·레슨 과제·오디션·취미) 추가. 지금까지는 새 곡이 모두 보컬로 저장됐음
 - 카드에 "아티스트 · 파트"와 "목적 · …" 배지 표시. "편집" 버튼으로 파트와 목적을 그 자리에서 함께 고침(Enter 저장, Esc 취소, 목적을 비우면 지움, 한 번에 한 카드)

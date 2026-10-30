@@ -29,6 +29,7 @@ import { normalizeMetronome } from "./lib/metronome";
 import Metronome from "./Metronome";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
 import Routine, { RoutineChecklist } from "./Routine";
+import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/backup";
 
 const initialSongs = [
   { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
@@ -62,6 +63,7 @@ function App() {
   const [partDraft, setPartDraft] = useState(DEFAULT_PART);
   const [purposeDraft, setPurposeDraft] = useState("");
   const purposeInputRef = useRef(null);
+  const backupInputRef = useRef(null);
   const [showForm, setShowForm] = useState(false);
   const [songSort, setSongSort] = useState(() => normalizeSongSort(loadData("muselog-song-sort", "added")));
   const [activeTab, setActiveTab] = useState("대시보드");
@@ -308,6 +310,40 @@ function App() {
     setSelectedDate(dateKey(d));
   }
 
+  // ---------- 백업 ----------
+  function exportBackup() {
+    const now = new Date();
+    const backup = buildBackup(key => localStorage.getItem(key), now);
+    const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = backupFileName(now);
+    link.click();
+    // 바로 지우면 일부 브라우저(Firefox, Safari)에서 다운로드가 시작되기 전에 주소가 사라진다
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // 확인을 받은 뒤에만 기록을 바꾸고, 새로고침해서 앱이 처음부터 읽게 한다 (예전 형식도 normalize 함수를 거친다)
+  async function importBackup(e) {
+    const file = e.target.files[0];
+    e.target.value = ""; // 같은 파일을 다시 골라도 동작하게
+    if (!file) return;
+
+    const result = parseBackup(await file.text());
+    if (!result.ok) {
+      window.alert(result.error);
+      return;
+    }
+    const exportedAt = new Date(result.backup.exportedAt);
+    const when = Number.isNaN(exportedAt.getTime()) ? "알 수 없음" : exportedAt.toLocaleString("ko-KR");
+    if (!window.confirm(`지금 이 브라우저의 기록이 백업 파일 내용으로 바뀝니다. (백업 날짜: ${when})\n계속할까요?`)) return;
+
+    const { set, remove } = planRestore(result.backup);
+    set.forEach(([key, value]) => localStorage.setItem(key, value));
+    remove.forEach(key => localStorage.removeItem(key));
+    window.location.reload();
+  }
+
   function addRoutineItem(title) {
     setRoutine(current => [...current, { id: Date.now(), title }]);
   }
@@ -391,9 +427,22 @@ function App() {
             <span className="breadcrumb">Workspace / {activeTab}</span>
             <span className="topbar-date">{today}</span>
           </div>
-          <div className="profile">
-            <div className="avatar">M</div>
-            <span>My Studio</span>
+          <div className="topbar-right">
+            <div className="backup-actions">
+              <button className="cal-today-button" onClick={exportBackup}>백업 내보내기</button>
+              <button className="cal-today-button" onClick={() => backupInputRef.current?.click()}>백업 불러오기</button>
+              <input
+                ref={backupInputRef}
+                type="file"
+                accept=".json,application/json"
+                onChange={importBackup}
+                hidden
+              />
+            </div>
+            <div className="profile">
+              <div className="avatar">M</div>
+              <span>My Studio</span>
+            </div>
           </div>
         </header>
 
