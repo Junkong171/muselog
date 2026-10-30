@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { normalizeSongSort, SONG_SORT_OPTIONS, sortSongs } from "./songs";
+import {
+  MAX_PURPOSE_LENGTH,
+  normalizeSongSort,
+  normalizeSongs,
+  PART_OPTIONS,
+  SONG_SORT_OPTIONS,
+  sortSongs,
+} from "./songs";
 
 const songs = [
   { id: 1, title: "밤편지", progress: 75 },
@@ -59,5 +66,68 @@ describe("normalizeSongSort (저장된 정렬 기준 읽기)", () => {
     [undefined, null, "", "제목순", 1, {}, []].forEach(value => {
       expect(normalizeSongSort(value)).toBe("added");
     });
+  });
+});
+
+describe("normalizeSongs (저장된 연습곡 읽기, 목적 마이그레이션)", () => {
+  const old = [
+    { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
+    { id: 2, title: "너를 생각해", artist: "주시크", type: "기타", progress: 45 },
+  ];
+
+  it("목적이 없는 예전 곡은 목적 없음(\"\")으로 채우고 다른 항목은 그대로", () => {
+    expect(normalizeSongs(old)).toEqual([
+      { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75, purpose: "" },
+      { id: 2, title: "너를 생각해", artist: "주시크", type: "기타", progress: 45, purpose: "" },
+    ]);
+  });
+
+  it("목적이 있으면 앞뒤 공백만 빼고 그대로", () => {
+    expect(normalizeSongs([{ ...old[0], purpose: "  12월 공연 " }])[0].purpose).toBe("12월 공연");
+  });
+
+  it("목적이 문자열이 아니면 목적 없음", () => {
+    [null, 3, true, ["축가"], { text: "축가" }].forEach(purpose => {
+      expect(normalizeSongs([{ ...old[0], purpose }])[0].purpose).toBe("");
+    });
+  });
+
+  it("목적이 30자보다 길면 30자까지", () => {
+    const purpose = normalizeSongs([{ ...old[0], purpose: "가".repeat(40) }])[0].purpose;
+    expect(purpose).toHaveLength(MAX_PURPOSE_LENGTH);
+  });
+
+  it("배열이 아니면 빈 목록, 객체가 아닌 항목은 버린다", () => {
+    [undefined, null, "abc", 3, {}].forEach(value => {
+      expect(normalizeSongs(value)).toEqual([]);
+    });
+    expect(normalizeSongs([null, "곡", old[0]]).map(s => s.id)).toEqual([1]);
+  });
+
+  it("파트 목록에 있는 값(예전 기본 곡의 보컬, 기타)은 그대로", () => {
+    expect(PART_OPTIONS).toEqual(["보컬", "기타", "피아노", "베이스", "드럼", "작곡", "그 외"]);
+    expect(normalizeSongs(old).map(s => s.type)).toEqual(["보컬", "기타"]);
+    PART_OPTIONS.forEach(type => {
+      expect(normalizeSongs([{ ...old[0], type }])[0].type).toBe(type);
+    });
+  });
+
+  it("파트가 없거나 문자열이 아니거나 비었으면 보컬", () => {
+    const { type: _omit, ...noType } = old[0];
+    expect(normalizeSongs([noType])[0].type).toBe("보컬");
+    [null, 3, "", "   ", ["기타"]].forEach(type => {
+      expect(normalizeSongs([{ ...old[0], type }])[0].type).toBe("보컬");
+    });
+  });
+
+  it("목록에 없는 파트 문자열은 그 외", () => {
+    expect(normalizeSongs([{ ...old[0], type: "바이올린" }])[0].type).toBe("그 외");
+  });
+
+  it("원본을 바꾸지 않는다", () => {
+    const copy = JSON.parse(JSON.stringify(old));
+    normalizeSongs(old);
+    expect(old).toEqual(copy);
+    expect(old[0]).not.toHaveProperty("purpose");
   });
 });

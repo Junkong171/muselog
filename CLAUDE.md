@@ -38,7 +38,7 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 
 | 키 | 내용 |
 |---|---|
-| `muselog-songs` | 연습곡 배열 `[{ id, title, artist, type, progress }]` |
+| `muselog-songs` | 연습곡 배열 `[{ id, title, artist, type, progress, purpose }]` (type = 파트: 보컬/기타/피아노/베이스/드럼/작곡/그 외, 없으면 보컬·모르는 값은 그 외. purpose = 목적 문자열 0~30자, `""` = 없음. 예전 곡은 `normalizeSongs`가 채움) |
 | `muselog-minutes` | 누적 연습 시간 (숫자, 분) |
 | `muselog-goal` | 하루 목표 시간 (숫자, 분) |
 | `muselog-logs` | 연습 기록 배열 `[{ id, date(ISO), minutes, songTitle, note }]` |
