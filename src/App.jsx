@@ -17,6 +17,7 @@ import {
 } from "./lib/calendar";
 import {
   DEFAULT_PART,
+  INITIAL_SONGS,
   MAX_PURPOSE_LENGTH,
   normalizeSongs,
   normalizeSongSort,
@@ -32,12 +33,7 @@ import Routine, { RoutineChecklist } from "./Routine";
 import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/backup";
 import { authErrorFromUrl, displayName } from "./lib/auth";
 import { supabase } from "./lib/supabase";
-
-const initialSongs = [
-  { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
-  { id: 2, title: "너를 생각해", artist: "주시크", type: "기타", progress: 45 },
-  { id: 3, title: "사랑은 늘 도망가", artist: "임영웅", type: "보컬", progress: 30 },
-];
+import { decideSync, hashData, normalizeSyncMeta, summarizeData, SYNC_META_KEY } from "./lib/sync";
 
 const TABS = ["대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더", "작업실"];
 const TAB_ICONS = ["⌂", "♫", "▤", "◔", "▦", "◈"];
@@ -53,7 +49,7 @@ function loadData(key, fallback) {
 }
 
 function App() {
-  const [songs, setSongs] = useState(() => normalizeSongs(loadData("muselog-songs", initialSongs)));
+  const [songs, setSongs] = useState(() => normalizeSongs(loadData("muselog-songs", INITIAL_SONGS)));
   const [minutes, setMinutes] = useState(() => loadData("muselog-minutes", 0));
   const [goal, setGoal] = useState(() => loadData("muselog-goal", 60));
   const [logs, setLogs] = useState(() => loadData("muselog-logs", []));
@@ -71,6 +67,11 @@ function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginError, setLoginError] = useState(() => authErrorFromUrl(window.location.href).hasError);
   const loginBoxRef = useRef(null);
+  // 계정 동기화: syncReady가 true가 되어야(처음 판단이 끝나야) 자동 저장을 시작한다
+  const [syncStatus, setSyncStatus] = useState(null); // null | "checking" | "saving" | "saved" | "error"
+  const [syncReady, setSyncReady] = useState(false);
+  const [syncConflict, setSyncConflict] = useState(null); // { cloud, local } — 어느 기록을 쓸지 묻는 중
+  const userId = user?.id ?? null;
   const [showForm, setShowForm] = useState(false);
   const [songSort, setSongSort] = useState(() => normalizeSongSort(loadData("muselog-song-sort", "added")));
   const [activeTab, setActiveTab] = useState("대시보드");
@@ -166,6 +167,23 @@ function App() {
   useEffect(() => {
     localStorage.setItem("muselog-routine-checks", JSON.stringify(routineChecks));
   }, [routineChecks]);
+
+  // ---------- 계정 동기화 ----------
+  // 로그인하면(또는 앱을 열 때 이미 로그인돼 있으면) 계정 기록과 비교해 올릴지·불러올지·물을지 정한다
+  // (로그아웃하면 userId가 없어져 아래 자동 저장이 멈추고, 저장 상태·선택 창은 로그인했을 때만 보인다)
+  useEffect(() => {
+    if (!supabase || !userId) return;
+    startSync(userId);
+  }, [userId]);
+
+  // 기록이 바뀌면 2초 뒤 계정에 저장한다. 위의 localStorage 저장 effect들 다음에 있어야 바뀐 값을 읽는다
+  useEffect(() => {
+    if (!supabase || !userId || !syncReady) return;
+    const meta = normalizeSyncMeta(loadData(SYNC_META_KEY, null));
+    if (meta.userId === userId && hashData(readLocalData()) === meta.hash) return;
+    const timer = setTimeout(() => uploadLocal(userId), 2000); // 올리기 시작하면 "저장 중…"
+    return () => clearTimeout(timer);
+  }, [userId, syncReady, songs, minutes, goal, logs, events, songSort, metronome, routine, routineChecks]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -391,10 +409,99 @@ function App() {
     if (error) setLoginError(true);
   }
 
-  // 로그아웃해도 이 브라우저의 기록은 지우지 않는다
+  // 로그아웃해도 이 브라우저의 기록은 지우지 않는다 (자동 저장은 userId가 없어지면서 멈춘다)
   async function logout() {
     await supabase.auth.signOut();
     setUser(null);
+    setSyncReady(false);
+    setSyncStatus(null);
+    setSyncConflict(null);
+  }
+
+  // 이 브라우저의 기록 9개 키 (백업 묶음 안쪽)
+  function readLocalData() {
+    return buildBackup(key => localStorage.getItem(key)).data;
+  }
+
+  function writeSyncMeta(meta) {
+    localStorage.setItem(SYNC_META_KEY, JSON.stringify(meta));
+  }
+
+  // 계정 기록 읽기: 없으면 null, 형식이 깨졌어도 null(다음 저장 때 이 기기 기록으로 덮인다)
+  async function fetchCloud(id) {
+    const { data, error } = await supabase.from("user_data").select("data, updated_at").eq("user_id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    const parsed = parseBackup(JSON.stringify(data.data));
+    return parsed.ok ? { updatedAt: data.updated_at, data: parsed.backup.data, backup: parsed.backup } : null;
+  }
+
+  // 이 기기 기록을 계정에 올린다. 저장 시각은 서버가 정한다
+  async function uploadLocal(id) {
+    setSyncStatus("saving");
+    const backup = buildBackup(key => localStorage.getItem(key));
+    const { data, error } = await supabase
+      .from("user_data")
+      .upsert({ user_id: id, data: backup })
+      .select("updated_at")
+      .single();
+    if (error) {
+      setSyncStatus("error");
+      return;
+    }
+    writeSyncMeta({ userId: id, syncedAt: data.updated_at, hash: hashData(backup.data) });
+    setSyncStatus("saved");
+    setSyncReady(true);
+  }
+
+  // 계정 기록으로 바꾼다: 백업 불러오기와 같은 길 (예전 형식도 새로고침 뒤 normalize 함수가 읽는다)
+  function applyCloud(id, cloud) {
+    writeSyncMeta({ userId: id, syncedAt: cloud.updatedAt, hash: hashData(cloud.data) });
+    const { set, remove } = planRestore(cloud.backup);
+    set.forEach(([key, value]) => localStorage.setItem(key, value));
+    remove.forEach(key => localStorage.removeItem(key));
+    window.location.reload();
+  }
+
+  async function startSync(id) {
+    setSyncReady(false);
+    setSyncConflict(null); // 앞 계정의 선택 창이 남아 있지 않게
+    setSyncStatus("checking");
+    let cloud;
+    try {
+      cloud = await fetchCloud(id);
+    } catch {
+      setSyncStatus("error");
+      return;
+    }
+    const localData = readLocalData();
+    const meta = normalizeSyncMeta(loadData(SYNC_META_KEY, null));
+    const action = decideSync({ cloud, meta, userId: id, localData });
+    if (action === "upload") {
+      await uploadLocal(id);
+    } else if (action === "download") {
+      applyCloud(id, cloud);
+    } else if (action === "ask") {
+      setSyncStatus(null);
+      setSyncConflict({ cloud, local: summarizeData(localData) });
+    } else {
+      writeSyncMeta({ userId: id, syncedAt: cloud.updatedAt, hash: hashData(localData) });
+      setSyncStatus("saved");
+      setSyncReady(true);
+    }
+  }
+
+  // 처음 판단이 끝나기 전에 실패했으면 처음부터, 끝난 뒤면 지금 기록을 다시 올린다
+  function retrySync() {
+    if (syncReady) uploadLocal(userId);
+    else startSync(userId);
+  }
+
+  async function resolveConflict(choice) {
+    const { cloud } = syncConflict;
+    setSyncConflict(null);
+    if (choice === "download") applyCloud(userId, cloud);
+    else await uploadLocal(userId);
   }
 
   function addRoutineItem(title) {
@@ -496,6 +603,15 @@ function App() {
               <div className="profile">
                 <div className="avatar">{displayName(user).charAt(0)}</div>
                 <span>{displayName(user)}</span>
+                {syncStatus === "error" ? (
+                  <button className="sync-status error" onClick={retrySync}>저장 실패 · 다시 시도</button>
+                ) : (
+                  syncStatus && (
+                    <span className="sync-status" role="status">
+                      {{ checking: "확인 중…", saving: "저장 중…", saved: "계정에 저장됨" }[syncStatus]}
+                    </span>
+                  )
+                )}
                 <button className="cal-today-button" onClick={logout}>로그아웃</button>
               </div>
             ) : (
@@ -516,7 +632,7 @@ function App() {
                     <button className="login-provider google" onClick={() => login("google")}>구글로 로그인</button>
                     <button className="login-provider kakao" onClick={() => login("kakao")}>카카오로 로그인</button>
                     <p>
-                      로그인하면 다음 업데이트부터 기록을 계정에 저장할 수 있어요.
+                      로그인하면 기록이 계정에 자동 저장되고, 다른 기기에서도 같은 기록을 볼 수 있어요.
                       로그인하지 않아도 지금처럼 쓸 수 있어요.
                     </p>
                     <button className="purpose-text-button" onClick={() => setLoginOpen(false)}>닫기</button>
@@ -532,6 +648,37 @@ function App() {
             로그인하지 못했어요. 다시 시도해 주세요.
             <button className="purpose-text-button" onClick={() => setLoginError(false)}>닫기</button>
           </p>
+        )}
+
+        {/* 계정과 이 기기에 서로 다른 기록이 있을 때: 고르기 전에는 계정에 아무것도 저장하지 않는다 */}
+        {user && syncConflict && (
+          <div className="sync-overlay">
+            <div className="sync-dialog" role="dialog" aria-modal="true" aria-labelledby="sync-title">
+              <h3 id="sync-title">계정과 이 기기의 기록이 달라요</h3>
+              <p>어느 기록을 쓸지 골라 주세요. 고르기 전에는 계정에 아무것도 저장하지 않아요.</p>
+              <div className="sync-compare">
+                <div>
+                  <strong>계정 기록</strong>
+                  <span>마지막 저장 {new Date(syncConflict.cloud.updatedAt).toLocaleString("ko-KR")}</span>
+                  <span>
+                    연습 기록 {summarizeData(syncConflict.cloud.data).logs}개 · 연습곡 {summarizeData(syncConflict.cloud.data).songs}곡
+                  </span>
+                </div>
+                <div>
+                  <strong>이 기기 기록</strong>
+                  <span>연습 기록 {syncConflict.local.logs}개 · 연습곡 {syncConflict.local.songs}곡</span>
+                </div>
+              </div>
+              <p className="sync-hint">
+                지금 이 기기 기록을 백업 파일로 받아 두려면 먼저 "백업 내보내기"를 누르세요.
+                <button className="cal-today-button" onClick={exportBackup}>백업 내보내기</button>
+              </p>
+              <div className="sync-actions">
+                <button className="primary-button" onClick={() => resolveConflict("download")}>계정 기록 불러오기</button>
+                <button className="practice-button" onClick={() => resolveConflict("upload")}>이 기기 기록으로 계정 덮어쓰기</button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* 배너는 대시보드에서만. 날짜는 위 상단 바에 항상 보인다 */}

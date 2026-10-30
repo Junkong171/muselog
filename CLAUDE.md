@@ -4,7 +4,7 @@
 
 - React 19 + Vite, JavaScript (TypeScript 아님), 순수 CSS (UI 라이브러리 없음)
 - 백엔드 없음: 모든 데이터는 브라우저 localStorage에 저장된다.
-- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 기록은 아직 계정에 저장하지 않는다(F-010 예정).
+- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 로그인하면 9개 키 묶음(백업 형식)을 Supabase 표 `user_data`에 자동 저장·불러오기한다(F-010, 판단 로직 `src/lib/sync.js`). 표와 보안 규칙(RLS: 본인 줄만)은 `docs/supabase/user_data.sql`.
 
 ## 사용자 안내 방식
 
@@ -30,7 +30,7 @@ src/
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, routine.js, backup.js, auth.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, routine.js, backup.js, auth.js, sync.js)
               supabase.js = Supabase 연결 (키가 없으면 null)
 public/       파비콘, 아이콘
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
@@ -49,8 +49,9 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-metronome` | 메트로놈 설정 `{ bpm(10~300), beats(2/3/4/6), accents(강조할 박 번호 배열, 1~6), subdivision(1~4, 리듬: ♩ ♫ 셋잇단음표 ♬) }` (없거나 깨진 항목은 기본값 120 / 4 / [1] / 1, 예전 `accent: true/false`는 `[1]` / `[]`로 읽음) |
 | `muselog-routine` | 고정 연습 루틴 목록 `[{ id, title(1~40자) }]` (배열 순서 = 보이는 순서, 깨진 항목은 버림) |
 | `muselog-routine-checks` | 오늘 체크한 루틴 `{ date("YYYY-MM-DD"), done: [id] }` (date가 오늘이 아니면 체크 없음으로 읽음) |
+| `muselog-sync-meta` | 계정 동기화 정보 `{ userId, syncedAt(서버 시각), hash(마지막으로 맞춘 기록 지문) }`. 백업에는 넣지 않는다. 없거나 깨지면 "맞춘 적 없음" |
 
-새 키를 추가하면 `src/lib/backup.js`의 `BACKUP_KEYS`에도 넣는다. (상단 바 "백업 내보내기/불러오기"가 이 목록의 키만 담고 되살린다. 백업 파일 형식: `{ app: "muselog", version: 1, exportedAt, data: { 키: 값 } }`)
+새 키를 추가하면 `src/lib/backup.js`의 `BACKUP_KEYS`에도 넣는다(기록 키라면). 그래야 백업과 계정 동기화에 함께 담긴다. (상단 바 "백업 내보내기/불러오기"가 이 목록의 키만 담고 되살린다. 백업 파일 형식: `{ app: "muselog", version: 1, exportedAt, data: { 키: 값 } }`)
 
 ## 규칙
 
