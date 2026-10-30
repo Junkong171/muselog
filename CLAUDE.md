@@ -4,6 +4,7 @@
 
 - React 19 + Vite, JavaScript (TypeScript 아님), 순수 CSS (UI 라이브러리 없음)
 - 백엔드 없음: 모든 데이터는 브라우저 localStorage에 저장된다.
+- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 기록은 아직 계정에 저장하지 않는다(F-010 예정).
 
 ## 사용자 안내 방식
 
@@ -29,7 +30,8 @@ src/
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, routine.js, backup.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, routine.js, backup.js, auth.js)
+              supabase.js = Supabase 연결 (키가 없으면 null)
 public/       파비콘, 아이콘
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 ```

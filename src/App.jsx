@@ -30,6 +30,8 @@ import Metronome from "./Metronome";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
 import Routine, { RoutineChecklist } from "./Routine";
 import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/backup";
+import { authErrorFromUrl, displayName } from "./lib/auth";
+import { supabase } from "./lib/supabase";
 
 const initialSongs = [
   { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
@@ -64,6 +66,11 @@ function App() {
   const [purposeDraft, setPurposeDraft] = useState("");
   const purposeInputRef = useRef(null);
   const backupInputRef = useRef(null);
+  // 로그인 (Supabase 키가 없으면 supabase가 null이라 로그인 버튼 없이 지금처럼 동작)
+  const [user, setUser] = useState(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginError, setLoginError] = useState(() => authErrorFromUrl(window.location.href).hasError);
+  const loginBoxRef = useRef(null);
   const [showForm, setShowForm] = useState(false);
   const [songSort, setSongSort] = useState(() => normalizeSongSort(loadData("muselog-song-sort", "added")));
   const [activeTab, setActiveTab] = useState("대시보드");
@@ -97,6 +104,36 @@ function App() {
   useEffect(() => {
     if (editingSongId !== null) purposeInputRef.current?.focus();
   }, [editingSongId]);
+
+  // ---------- 로그인 ----------
+  // 로그인 실패로 돌아왔으면 주소창의 오류 글자를 지운다 (안내는 loginError로 보여 준다)
+  useEffect(() => {
+    const { hasError, cleanUrl } = authErrorFromUrl(window.location.href);
+    if (hasError) window.history.replaceState(null, "", cleanUrl);
+  }, []);
+
+  // 브라우저에 남은 로그인 정보를 읽고, 로그인·로그아웃이 일어날 때마다 user를 바꾼다
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  // 로그인 창: 바깥을 누르거나 Esc를 누르면 닫힌다
+  useEffect(() => {
+    if (!loginOpen) return;
+    const closeOnOutside = e => {
+      if (loginBoxRef.current && !loginBoxRef.current.contains(e.target)) setLoginOpen(false);
+    };
+    const closeOnEsc = e => e.key === "Escape" && setLoginOpen(false);
+    document.addEventListener("mousedown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEsc);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEsc);
+    };
+  }, [loginOpen]);
 
   useEffect(() => {
     localStorage.setItem("muselog-minutes", JSON.stringify(minutes));
@@ -344,6 +381,22 @@ function App() {
     window.location.reload();
   }
 
+  // 로그인 화면으로 갔다가 지금 주소로 돌아온다 (개발용이면 localhost, 배포 사이트면 배포 주소)
+  async function login(provider) {
+    setLoginError(false);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: window.location.origin + window.location.pathname },
+    });
+    if (error) setLoginError(true);
+  }
+
+  // 로그아웃해도 이 브라우저의 기록은 지우지 않는다
+  async function logout() {
+    await supabase.auth.signOut();
+    setUser(null);
+  }
+
   function addRoutineItem(title) {
     setRoutine(current => [...current, { id: Date.now(), title }]);
   }
@@ -439,12 +492,47 @@ function App() {
                 hidden
               />
             </div>
-            <div className="profile">
-              <div className="avatar">M</div>
-              <span>My Studio</span>
-            </div>
+            {user ? (
+              <div className="profile">
+                <div className="avatar">{displayName(user).charAt(0)}</div>
+                <span>{displayName(user)}</span>
+                <button className="cal-today-button" onClick={logout}>로그아웃</button>
+              </div>
+            ) : (
+              <div className="profile login-anchor" ref={loginBoxRef}>
+                <div className="avatar">M</div>
+                <span>My Studio</span>
+                {supabase && (
+                  <button
+                    className="cal-today-button"
+                    onClick={() => setLoginOpen(open => !open)}
+                    aria-expanded={loginOpen}
+                  >
+                    로그인
+                  </button>
+                )}
+                {loginOpen && (
+                  <div className="login-popover" role="dialog" aria-label="로그인">
+                    <button className="login-provider google" onClick={() => login("google")}>구글로 로그인</button>
+                    <button className="login-provider kakao" onClick={() => login("kakao")}>카카오로 로그인</button>
+                    <p>
+                      로그인하면 다음 업데이트부터 기록을 계정에 저장할 수 있어요.
+                      로그인하지 않아도 지금처럼 쓸 수 있어요.
+                    </p>
+                    <button className="purpose-text-button" onClick={() => setLoginOpen(false)}>닫기</button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </header>
+
+        {loginError && (
+          <p className="login-error" role="alert">
+            로그인하지 못했어요. 다시 시도해 주세요.
+            <button className="purpose-text-button" onClick={() => setLoginError(false)}>닫기</button>
+          </p>
+        )}
 
         {/* 배너는 대시보드에서만. 날짜는 위 상단 바에 항상 보인다 */}
         {activeTab === "대시보드" && (

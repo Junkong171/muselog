@@ -200,6 +200,76 @@ select:focus-visible {
   margin-left: 0;
 }
 
+/* ---------- 로그인 ---------- */
+.profile .cal-today-button {
+  margin-left: 4px;
+}
+
+.login-anchor {
+  position: relative;
+}
+
+.login-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 8px;
+  width: min(280px, calc(100vw - 34px));
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(45, 38, 64, 0.14);
+}
+
+.login-popover p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.login-popover .purpose-text-button {
+  justify-self: end;
+}
+
+.login-provider {
+  padding: 11px 12px;
+  border: 1px solid #e2dcf0;
+  border-radius: 10px;
+  color: #3a3055;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.login-provider.kakao {
+  border-color: #fee500;
+  color: #191919;
+  background: #fee500;
+}
+
+.login-provider:hover {
+  filter: brightness(0.97);
+}
+
+.login-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #c0475b;
+  background: #fbeff1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .breadcrumb {
   color: #9a94a8;
   font-size: 12px;
@@ -822,8 +892,22 @@ select:focus-visible {
   }
 
   .topbar {
+    position: relative;
     min-height: 58px;
     padding: 10px 0;
+  }
+
+  /* 좁은 화면에서는 프로필이 줄바꿈되어 어디 있든 로그인 창이 상단 바 안에 펼쳐지게 */
+  .login-anchor {
+    position: static;
+  }
+
+  .login-popover {
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: auto;
+    max-width: 340px;
   }
 
   .welcome {
