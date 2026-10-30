@@ -15,7 +15,16 @@ import {
   sortEvents,
   upcomingEvents,
 } from "./lib/calendar";
-import { normalizeSongSort, SONG_SORT_OPTIONS, sortSongs } from "./lib/songs";
+import {
+  DEFAULT_PART,
+  MAX_PURPOSE_LENGTH,
+  normalizeSongs,
+  normalizeSongSort,
+  PART_OPTIONS,
+  PURPOSE_SUGGESTIONS,
+  SONG_SORT_OPTIONS,
+  sortSongs,
+} from "./lib/songs";
 import { normalizeMetronome } from "./lib/metronome";
 import Metronome from "./Metronome";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
@@ -41,12 +50,18 @@ function loadData(key, fallback) {
 }
 
 function App() {
-  const [songs, setSongs] = useState(() => loadData("muselog-songs", initialSongs));
+  const [songs, setSongs] = useState(() => normalizeSongs(loadData("muselog-songs", initialSongs)));
   const [minutes, setMinutes] = useState(() => loadData("muselog-minutes", 0));
   const [goal, setGoal] = useState(() => loadData("muselog-goal", 60));
   const [logs, setLogs] = useState(() => loadData("muselog-logs", []));
   const [newTitle, setNewTitle] = useState("");
   const [newArtist, setNewArtist] = useState("");
+  const [newPart, setNewPart] = useState(DEFAULT_PART);
+  const [newPurpose, setNewPurpose] = useState("");
+  const [editingSongId, setEditingSongId] = useState(null); // 파트·목적을 고치는 중인 곡 (한 번에 하나)
+  const [partDraft, setPartDraft] = useState(DEFAULT_PART);
+  const [purposeDraft, setPurposeDraft] = useState("");
+  const purposeInputRef = useRef(null);
   const [showForm, setShowForm] = useState(false);
   const [songSort, setSongSort] = useState(() => normalizeSongSort(loadData("muselog-song-sort", "added")));
   const [activeTab, setActiveTab] = useState("대시보드");
@@ -75,6 +90,11 @@ function App() {
   useEffect(() => {
     localStorage.setItem("muselog-songs", JSON.stringify(songs));
   }, [songs]);
+
+  // 편집 칸이 열릴 때 한 번만 목적 칸에 커서를 둔다 (파트를 고르는 동안 커서를 뺏지 않게)
+  useEffect(() => {
+    if (editingSongId !== null) purposeInputRef.current?.focus();
+  }, [editingSongId]);
 
   useEffect(() => {
     localStorage.setItem("muselog-minutes", JSON.stringify(minutes));
@@ -124,13 +144,30 @@ function App() {
         id: Date.now(),
         title: newTitle.trim(),
         artist: newArtist.trim() || "아티스트 미입력",
-        type: "보컬",
+        type: newPart,
         progress: 0,
+        purpose: newPurpose.trim().slice(0, MAX_PURPOSE_LENGTH),
       },
     ]);
     setNewTitle("");
     setNewArtist("");
+    setNewPart(DEFAULT_PART);
+    setNewPurpose("");
     setShowForm(false);
+  }
+
+  function startSongEdit(song) {
+    setEditingSongId(song.id);
+    setPartDraft(song.type);
+    setPurposeDraft(song.purpose);
+  }
+
+  // 파트와 목적을 함께 저장한다. 목적을 비운 채 저장하면 목적이 지워진다
+  function saveSongEdit(e) {
+    e.preventDefault();
+    const purpose = purposeDraft.trim().slice(0, MAX_PURPOSE_LENGTH);
+    setSongs(current => current.map(s => (s.id === editingSongId ? { ...s, type: partDraft, purpose } : s)));
+    setEditingSongId(null);
   }
 
   // 연습 기록 탭과 작업실 메트로놈이 함께 쓰는 기록 저장
@@ -802,9 +839,25 @@ function App() {
                   onChange={e => setNewArtist(e.target.value)}
                   placeholder="아티스트"
                 />
+                <select value={newPart} onChange={e => setNewPart(e.target.value)} aria-label="파트">
+                  {PART_OPTIONS.map(part => <option key={part} value={part}>{part}</option>)}
+                </select>
+                <input
+                  value={newPurpose}
+                  onChange={e => setNewPurpose(e.target.value)}
+                  placeholder="목적 (선택, 예: 축가)"
+                  list="purpose-suggestions"
+                  maxLength={MAX_PURPOSE_LENGTH}
+                  aria-label="목적 (선택)"
+                />
                 <button className="primary-button" type="submit">곡 저장</button>
               </form>
             )}
+
+            {/* 곡 추가 칸과 카드의 목적 고치기 칸이 함께 쓰는 예시 목록 */}
+            <datalist id="purpose-suggestions">
+              {PURPOSE_SUGGESTIONS.map(purpose => <option key={purpose} value={purpose} />)}
+            </datalist>
 
             {songs.length === 0 ? (
               <div className="empty-state">
@@ -836,6 +889,39 @@ function App() {
                         <div className="song-info">
                           <h3>{song.title}</h3>
                           <p>{song.artist} <span>·</span> {song.type}</p>
+                          {editingSongId === song.id ? (
+                            <form className="purpose-edit" onSubmit={saveSongEdit}>
+                              <select
+                                value={partDraft}
+                                onChange={e => setPartDraft(e.target.value)}
+                                onKeyDown={e => e.key === "Escape" && setEditingSongId(null)}
+                                aria-label={`${song.title} 파트`}
+                              >
+                                {PART_OPTIONS.map(part => <option key={part} value={part}>{part}</option>)}
+                              </select>
+                              <input
+                                ref={purposeInputRef}
+                                value={purposeDraft}
+                                onChange={e => setPurposeDraft(e.target.value)}
+                                onKeyDown={e => e.key === "Escape" && setEditingSongId(null)}
+                                placeholder="목적 (비우면 지워져요)"
+                                list="purpose-suggestions"
+                                maxLength={MAX_PURPOSE_LENGTH}
+                                aria-label={`${song.title} 목적`}
+                              />
+                              <button type="submit" className="purpose-save">저장</button>
+                              <button type="button" className="purpose-text-button" onClick={() => setEditingSongId(null)}>
+                                취소
+                              </button>
+                            </form>
+                          ) : (
+                            <div className="song-purpose">
+                              {song.purpose && <span className="purpose-badge">목적 · {song.purpose}</span>}
+                              <button className="purpose-text-button" onClick={() => startSongEdit(song)}>
+                                편집
+                              </button>
+                            </div>
+                          )}
                           <div className="song-progress">
                             <div className="progress-track">
                               <div className="progress-fill" style={{ width: `${song.progress}%` }} />

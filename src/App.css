@@ -583,6 +583,77 @@ select:focus-visible {
   color: #c5bfd3;
 }
 
+.song-purpose {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: -2px 0 8px;
+}
+
+.purpose-badge {
+  overflow-wrap: anywhere;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #5a4a8a;
+  background: var(--purple-light);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.purpose-text-button {
+  padding: 2px 0;
+  border: 0;
+  color: #aaa4b8;
+  background: none;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.purpose-text-button:hover {
+  color: #5a4a8a;
+  text-decoration: underline;
+}
+
+.purpose-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: -2px 0 8px;
+}
+
+.purpose-edit select {
+  padding: 6px 8px;
+  border: 1px solid #e4dfee;
+  border-radius: 8px;
+  color: #3a3055;
+  background: #fcfbfe;
+  font-size: 12px;
+}
+
+.purpose-edit input {
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 260px;
+  padding: 6px 10px;
+  border: 1px solid #e4dfee;
+  border-radius: 8px;
+  color: #3a3055;
+  background: #fcfbfe;
+  font-size: 12px;
+}
+
+.purpose-save {
+  padding: 6px 11px;
+  border: 1px solid var(--purple-dark);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--purple-dark);
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .song-progress {
   display: flex;
   align-items: center;
