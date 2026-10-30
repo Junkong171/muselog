@@ -587,7 +587,7 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-icon">♪</div>
+          <img className="brand-icon" src="/logo.svg" alt="" />
           <div>
             <strong>MUSELOG</strong>
             <span>YOUR MUSIC JOURNAL</span>
@@ -672,7 +672,7 @@ function App() {
               </div>
             ) : (
               <div className="profile login-anchor" ref={loginBoxRef}>
-                <div className="avatar">M</div>
+                <img className="avatar avatar-logo" src="/logo.svg" alt="" />
                 <span>My Studio</span>
                 {supabase && (
                   <button

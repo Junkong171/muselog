@@ -69,16 +69,12 @@ select:focus-visible {
   margin: 0 0 54px 5px;
 }
 
+/* 앱 로고 그림 (public/logo.svg, 시안 8번 연습 노트) */
 .brand-icon {
-  display: grid;
-  place-items: center;
+  display: block;
+  flex-shrink: 0;
   width: 43px;
   height: 43px;
-  border-radius: 14px;
-  color: #fff;
-  background: var(--purple-dark);
-  font-size: 27px;
-  font-weight: 700;
 }
 
 .brand strong {
@@ -458,6 +454,14 @@ select:focus-visible {
   color: #fff;
   background: var(--purple-dark);
   font-weight: 700;
+}
+
+/* 로그인 전 프로필 자리: 로고 그림 */
+.avatar-logo {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: none;
 }
 
 .welcome {

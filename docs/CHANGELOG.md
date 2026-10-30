@@ -4,6 +4,12 @@ MUSELOG에서 한 일을 날짜순으로 기록한다. (최신이 위)
 
 ## 2026-10-31
 
+### 앱 로고(연습 노트 아이콘) 적용 (브랜치 `feature/app-logo`, 명세 `docs/specs/F-012-app-logo.md`)
+- 카카오 앱 아이콘과 같은 시안 8번 그림을 `public/logo.svg`로 추가, 파비콘(`favicon.svg`, Vite 번개 → 로고)과 휴대폰 홈 화면 아이콘(`apple-touch-icon.png`)에도 사용
+- 사이드바 맨 위 `♪` 자리와 로그인 전 프로필 "M" 자리에 로고 그림. 로그인 상태 프로필은 그대로
+- 탭 제목 `MUSELOG`, `<html lang="ko">`
+- 검증: tester PASS 7 / FAIL 0 / 확인 불가 1 → 휴대폰 폭(375px) 로고는 브라우저에서 확인 (2026-10-31)
+
 ### 연습곡 삭제, 사이드바 탭 순서 바꾸기 (브랜치 `feature/song-delete-tab-order`, 명세 `docs/specs/F-011-song-delete-tab-order.md`)
 - 연습곡 카드에 "삭제"(확인 창 후 삭제). 연습 기록·통계는 그대로 남고 곡 선택 목록에서만 빠짐. 편집 중인 곡이면 편집 칸 닫힘
 - 표지 그림을 곡 id로 정해(`songCoverIndex`) 다른 곡을 지우거나 정렬해도 그림이 그대로. 예시 곡 3개는 예전과 같은 그림
