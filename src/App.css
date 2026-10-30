@@ -256,6 +256,108 @@ select:focus-visible {
   filter: brightness(0.97);
 }
 
+/* ---------- 계정 동기화 ---------- */
+.sync-status {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.sync-status.error {
+  padding: 0;
+  border: 0;
+  color: #c0475b;
+  background: none;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.sync-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(45, 38, 64, 0.45);
+}
+
+.sync-dialog {
+  width: 100%;
+  max-width: 440px;
+  padding: 22px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(45, 38, 64, 0.25);
+}
+
+.sync-dialog h3 {
+  margin: 0 0 6px;
+  color: #3a3055;
+  font-size: 16px;
+}
+
+.sync-dialog > p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.sync-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sync-compare div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--cream);
+  font-size: 11px;
+  color: #5a4a8a;
+}
+
+.sync-compare strong {
+  color: #3a3055;
+  font-size: 13px;
+}
+
+.sync-dialog > p.sync-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f4f1fa;
+  color: #5a4a8a;
+}
+
+.sync-hint .cal-today-button {
+  margin-left: 0;
+}
+
+.sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sync-actions button {
+  flex: 1 1 160px;
+}
+
+@media (max-width: 420px) {
+  .sync-compare {
+    grid-template-columns: 1fr;
+  }
+}
+
 .login-error {
   display: flex;
   flex-wrap: wrap;
@@ -290,8 +392,9 @@ select:focus-visible {
 
 .profile {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 6px 10px;
   color: #554d6b;
   font-size: 12px;
   font-weight: 600;

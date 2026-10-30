@@ -6,6 +6,13 @@ export const SONG_SORT_OPTIONS = [
   { key: "progress", label: "진행률순" },
 ];
 
+// 처음 쓰는 사람에게 깔아 두는 예시 곡 (계정 동기화에서 "비어 있음" 판단에도 쓴다)
+export const INITIAL_SONGS = [
+  { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
+  { id: 2, title: "너를 생각해", artist: "주시크", type: "기타", progress: 45 },
+  { id: 3, title: "사랑은 늘 도망가", artist: "임영웅", type: "보컬", progress: 30 },
+];
+
 export const MAX_PURPOSE_LENGTH = 30;
 export const PURPOSE_SUGGESTIONS = ["공연", "축가", "레슨 과제", "오디션", "취미"];
 
