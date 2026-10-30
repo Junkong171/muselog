@@ -13,6 +13,13 @@ export const INITIAL_SONGS = [
   { id: 3, title: "사랑은 늘 도망가", artist: "임영웅", type: "보컬", progress: 30 },
 ];
 
+// 표지 그림(♫ ♪ ♬ ♩ 네 가지)을 곡의 id로 정한다: 다른 곡을 지우거나 정렬해도 각 곡의 그림이 그대로다.
+// 예시 곡(id 1, 2, 3)은 예전처럼 0, 1, 2번 그림이 나온다
+export function songCoverIndex(id) {
+  const n = typeof id === "number" ? Math.trunc(id) : NaN;
+  return Number.isFinite(n) ? Math.abs(n - 1) % 4 : 0;
+}
+
 export const MAX_PURPOSE_LENGTH = 30;
 export const PURPOSE_SUGGESTIONS = ["공연", "축가", "레슨 과제", "오디션", "취미"];
 

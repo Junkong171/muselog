@@ -23,8 +23,9 @@ const sample = {
 };
 
 describe("buildBackup", () => {
-  it("9개 키가 정해져 있다", () => {
-    expect(BACKUP_KEYS).toHaveLength(9);
+  it("10개 키가 정해져 있다 (탭 순서 포함)", () => {
+    expect(BACKUP_KEYS).toHaveLength(10);
+    expect(BACKUP_KEYS).toContain("muselog-tab-order");
     expect(BACKUP_KEYS.every(k => k.startsWith("muselog-"))).toBe(true);
   });
 
@@ -36,7 +37,7 @@ describe("buildBackup", () => {
     expect(backup.data).toEqual(sample);
   });
 
-  it("9개 키 밖의 값은 담지 않는다", () => {
+  it("정해진 키 밖의 값은 담지 않는다", () => {
     const backup = buildBackup(storage({ ...sample, "other-app": [1, 2], "muselog-unknown": 1 }), now);
     expect(Object.keys(backup.data).sort()).toEqual(Object.keys(sample).sort());
   });
@@ -98,7 +99,7 @@ describe("planRestore", () => {
     expect(remove.sort()).toEqual(BACKUP_KEYS.filter(k => !(k in sample)).sort());
   });
 
-  it("백업 data에 9개 밖의 키가 있어도 무시한다", () => {
+  it("백업 data에 정해진 키 밖의 값이 있어도 무시한다", () => {
     const { set } = planRestore({ app: "muselog", version: 1, data: { "evil-key": 1, "muselog-goal": 90 } });
     expect(set).toEqual([["muselog-goal", "90"]]);
   });

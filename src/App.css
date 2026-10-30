@@ -137,6 +137,55 @@ select:focus-visible {
   font-weight: 700;
 }
 
+/* 탭 끌어다 놓기: 끌고 있는 탭은 흐리게, 놓일 자리는 보라색 선 */
+.nav-item.dragging {
+  opacity: 0.45;
+}
+
+.nav-item.drop-before {
+  box-shadow: inset 0 3px 0 var(--purple-dark);
+}
+
+.nav-item.drop-after {
+  box-shadow: inset 0 -3px 0 var(--purple-dark);
+}
+
+.nav-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-reset {
+  margin-right: 4px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--purple-dark);
+  background: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.nav-reset:hover {
+  background: var(--purple-light);
+}
+
+.purpose-text-button.danger:hover {
+  color: #c0475b;
+}
+
+@media (max-width: 700px) {
+  .nav-item.drop-before {
+    box-shadow: inset 3px 0 0 var(--purple-dark);
+  }
+
+  .nav-item.drop-after {
+    box-shadow: inset -3px 0 0 var(--purple-dark);
+  }
+}
+
 .sidebar-bottom {
   margin-top: auto;
   padding: 22px 16px;

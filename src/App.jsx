@@ -24,6 +24,7 @@ import {
   PART_OPTIONS,
   PURPOSE_SUGGESTIONS,
   SONG_SORT_OPTIONS,
+  songCoverIndex,
   sortSongs,
 } from "./lib/songs";
 import { normalizeMetronome } from "./lib/metronome";
@@ -34,9 +35,8 @@ import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/bac
 import { authErrorFromUrl, displayName } from "./lib/auth";
 import { supabase } from "./lib/supabase";
 import { decideSync, hashData, normalizeSyncMeta, summarizeData, SYNC_META_KEY } from "./lib/sync";
+import { DEFAULT_TABS, isDefaultTabOrder, moveTab, normalizeTabOrder, TAB_ICONS } from "./lib/tabs";
 
-const TABS = ["대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더", "작업실"];
-const TAB_ICONS = ["⌂", "♫", "▤", "◔", "▦", "◈"];
 const CAL_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function loadData(key, fallback) {
@@ -75,6 +75,9 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [songSort, setSongSort] = useState(() => normalizeSongSort(loadData("muselog-song-sort", "added")));
   const [activeTab, setActiveTab] = useState("대시보드");
+  const [tabOrder, setTabOrder] = useState(() => normalizeTabOrder(loadData("muselog-tab-order", null)));
+  const [dragFrom, setDragFrom] = useState(null); // 끌고 있는 탭의 순서 번호
+  const [dropAt, setDropAt] = useState(null); // 놓일 자리 (이 번호의 탭 앞)
   const [logMinutes, setLogMinutes] = useState("15");
   const [logNote, setLogNote] = useState("");
   const [logSongId, setLogSongId] = useState("");
@@ -168,6 +171,10 @@ function App() {
     localStorage.setItem("muselog-routine-checks", JSON.stringify(routineChecks));
   }, [routineChecks]);
 
+  useEffect(() => {
+    localStorage.setItem("muselog-tab-order", JSON.stringify(tabOrder));
+  }, [tabOrder]);
+
   // ---------- 계정 동기화 ----------
   // 로그인하면(또는 앱을 열 때 이미 로그인돼 있으면) 계정 기록과 비교해 올릴지·불러올지·물을지 정한다
   // (로그아웃하면 userId가 없어져 아래 자동 저장이 멈추고, 저장 상태·선택 창은 로그인했을 때만 보인다)
@@ -183,7 +190,7 @@ function App() {
     if (meta.userId === userId && hashData(readLocalData()) === meta.hash) return;
     const timer = setTimeout(() => uploadLocal(userId), 2000); // 올리기 시작하면 "저장 중…"
     return () => clearTimeout(timer);
-  }, [userId, syncReady, songs, minutes, goal, logs, events, songSort, metronome, routine, routineChecks]);
+  }, [userId, syncReady, songs, minutes, goal, logs, events, songSort, metronome, routine, routineChecks, tabOrder]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -211,6 +218,31 @@ function App() {
     setNewPart(DEFAULT_PART);
     setNewPurpose("");
     setShowForm(false);
+  }
+
+  // 곡만 지운다. 연습 기록에는 곡 제목이 글자로 저장되어 있어 기록·통계는 그대로 남는다
+  function deleteSong(song) {
+    if (!window.confirm(`'${song.title}' 곡을 삭제할까요? 이 곡으로 남긴 연습 기록은 그대로 남아요.`)) return;
+    setSongs(current => current.filter(s => s.id !== song.id));
+    if (editingSongId === song.id) setEditingSongId(null);
+    if (logSongId === String(song.id)) setLogSongId("");
+  }
+
+  // 사이드바 탭 끌어다 놓기. 위쪽 절반에 놓으면 그 탭 앞, 아래쪽 절반이면 뒤 (가로 배치인 좁은 화면은 왼쪽/오른쪽)
+  function dragOverTab(e, index) {
+    if (dragFrom === null) return;
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const horizontal = window.matchMedia("(max-width: 700px)").matches;
+    const before = horizontal ? e.clientX < rect.left + rect.width / 2 : e.clientY < rect.top + rect.height / 2;
+    setDropAt(before ? index : index + 1);
+  }
+
+  function dropTab(e) {
+    e.preventDefault();
+    if (dragFrom !== null && dropAt !== null) setTabOrder(current => moveTab(current, dragFrom, dropAt));
+    setDragFrom(null);
+    setDropAt(null);
   }
 
   function startSongEdit(song) {
@@ -418,7 +450,7 @@ function App() {
     setSyncConflict(null);
   }
 
-  // 이 브라우저의 기록 9개 키 (백업 묶음 안쪽)
+  // 이 브라우저의 기록 키(BACKUP_KEYS) 묶음 안쪽
   function readLocalData() {
     return buildBackup(key => localStorage.getItem(key)).data;
   }
@@ -562,14 +594,38 @@ function App() {
           </div>
         </div>
 
-        <p className="nav-label">WORKSPACE</p>
-        {TABS.map((tab, i) => (
+        <p className="nav-label">
+          WORKSPACE
+          {!isDefaultTabOrder(tabOrder) && (
+            <button className="nav-reset" onClick={() => setTabOrder([...DEFAULT_TABS])}>기본 순서</button>
+          )}
+        </p>
+        {tabOrder.map((tab, i) => (
           <button
             key={tab}
-            className={`nav-item ${activeTab === tab ? "active" : ""}`}
+            className={[
+              "nav-item",
+              activeTab === tab ? "active" : "",
+              dragFrom === i ? "dragging" : "",
+              dragFrom !== null && dropAt === i && dropAt !== dragFrom && dropAt !== dragFrom + 1 ? "drop-before" : "",
+              dragFrom !== null && dropAt === i + 1 && i === tabOrder.length - 1 && dropAt !== dragFrom + 1 ? "drop-after" : "",
+            ].join(" ")}
             onClick={() => setActiveTab(tab)}
+            draggable
+            onDragStart={e => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("text/plain", tab);
+              setDragFrom(i);
+            }}
+            onDragOver={e => dragOverTab(e, i)}
+            onDrop={dropTab}
+            onDragEnd={() => {
+              setDragFrom(null);
+              setDropAt(null);
+            }}
+            title="끌어서 순서를 바꿀 수 있어요"
           >
-            <span>{TAB_ICONS[i]}</span>
+            <span>{TAB_ICONS[tab]}</span>
             {tab}
           </button>
         ))}
@@ -1163,8 +1219,8 @@ function App() {
                 </div>
                 <div className="song-list">
                   {sortSongs(songs, songSort).map(song => {
-                    // 표지는 추가한 순서로 정해 두어 정렬을 바꿔도 곡을 따라간다
-                    const cover = songs.indexOf(song) % 4;
+                    // 표지는 곡의 id로 정해 두어 정렬을 바꾸거나 다른 곡을 지워도 곡을 따라간다
+                    const cover = songCoverIndex(song.id);
                     return (
                       <article className="song-card" key={song.id}>
                         <div className={`song-cover cover-${cover}`}>
@@ -1203,6 +1259,9 @@ function App() {
                               {song.purpose && <span className="purpose-badge">목적 · {song.purpose}</span>}
                               <button className="purpose-text-button" onClick={() => startSongEdit(song)}>
                                 편집
+                              </button>
+                              <button className="purpose-text-button danger" onClick={() => deleteSong(song)}>
+                                삭제
                               </button>
                             </div>
                           )}

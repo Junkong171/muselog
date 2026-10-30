@@ -16,6 +16,7 @@ export const BACKUP_KEYS = [
   "muselog-metronome",
   "muselog-routine",
   "muselog-routine-checks",
+  "muselog-tab-order",
 ];
 
 // getItem(key): 저장된 글자 또는 null (localStorage.getItem과 같은 모양)

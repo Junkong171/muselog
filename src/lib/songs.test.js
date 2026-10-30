@@ -5,6 +5,7 @@ import {
   normalizeSongs,
   PART_OPTIONS,
   SONG_SORT_OPTIONS,
+  songCoverIndex,
   sortSongs,
 } from "./songs";
 
@@ -129,5 +130,24 @@ describe("normalizeSongs (저장된 연습곡 읽기, 목적 마이그레이션)
     normalizeSongs(old);
     expect(old).toEqual(copy);
     expect(old[0]).not.toHaveProperty("purpose");
+  });
+});
+
+describe("songCoverIndex (표지 그림)", () => {
+  it("예시 곡은 예전과 같은 그림 (0, 1, 2)", () => {
+    expect([1, 2, 3].map(songCoverIndex)).toEqual([0, 1, 2]);
+  });
+
+  it("같은 id는 늘 같은 그림, 0~3 안", () => {
+    const id = 1793327699463;
+    expect(songCoverIndex(id)).toBe(songCoverIndex(id));
+    [4, 5, 99, 1793327699463, 0, -7].forEach(v => {
+      expect(songCoverIndex(v)).toBeGreaterThanOrEqual(0);
+      expect(songCoverIndex(v)).toBeLessThan(4);
+    });
+  });
+
+  it("숫자가 아닌 id는 0번 그림", () => {
+    [undefined, null, "abc", {}].forEach(v => expect(songCoverIndex(v)).toBe(0));
   });
 });
