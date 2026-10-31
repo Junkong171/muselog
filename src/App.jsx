@@ -31,6 +31,7 @@ import { normalizeMetronome } from "./lib/metronome";
 import Metronome from "./Metronome";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
 import Routine, { RoutineChecklist } from "./Routine";
+import Tuner from "./Tuner";
 import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/backup";
 import { authErrorFromUrl, displayName } from "./lib/auth";
 import { supabase } from "./lib/supabase";
@@ -755,6 +756,19 @@ function App() {
           </section>
         )}
 
+        {/* 작업실에서는 도구가 바로 보이도록 큰 카드 대신 한 줄 요약 */}
+        {activeTab === "작업실" ? (
+        <section className="stats-strip" aria-label="연습 요약">
+          <span>오늘 <strong>{todayMinutes}분</strong> / 목표 {goal}분 ({Math.min(Math.round((todayMinutes / Math.max(goal, 1)) * 100), 100)}%)</span>
+          <div className="progress-track">
+            <div
+              className="progress-fill"
+              style={{ width: `${Math.min((todayMinutes / Math.max(goal, 1)) * 100, 100)}%` }}
+            />
+          </div>
+          <span>이번 주 <strong>{weekMinutes}분</strong></span>
+        </section>
+        ) : (
         <section className="stats-grid">
           <div className="stat-card">
             <div className="stat-heading">
@@ -804,6 +818,7 @@ function App() {
             </div>
           </div>
         </section>
+        )}
 
         {activeTab === "연습 기록" ? (
           <>
@@ -1100,7 +1115,7 @@ function App() {
               songs={songs}
               onSaveLog={recordPractice}
             />
-            <p className="chart-empty">튜너 등 다른 도구는 곧 추가될 예정이에요.</p>
+            <Tuner />
           </>
         ) : (
           <>
