@@ -72,6 +72,12 @@ function App() {
   const [syncStatus, setSyncStatus] = useState(null); // null | "checking" | "saving" | "saved" | "error"
   const [syncReady, setSyncReady] = useState(false);
   const [syncConflict, setSyncConflict] = useState(null); // { cloud, local } — 어느 기록을 쓸지 묻는 중
+  // 회원 탈퇴 확인 창: "탈퇴"를 직접 써야 버튼이 눌린다
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteText, setDeleteText] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
+  const [accountDeleted, setAccountDeleted] = useState(false);
   const userId = user?.id ?? null;
   const [showForm, setShowForm] = useState(false);
   const [songSort, setSongSort] = useState(() => normalizeSongSort(loadData("muselog-song-sort", "added")));
@@ -124,6 +130,14 @@ function App() {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
     return () => data.subscription.unsubscribe();
   }, []);
+
+  // 회원 탈퇴 창: Esc를 누르면 닫힌다 (탈퇴하는 중에는 닫히지 않음)
+  useEffect(() => {
+    if (!deleteOpen || deleteBusy) return;
+    const closeOnEsc = e => e.key === "Escape" && setDeleteOpen(false);
+    document.addEventListener("keydown", closeOnEsc);
+    return () => document.removeEventListener("keydown", closeOnEsc);
+  }, [deleteOpen, deleteBusy]);
 
   // 로그인 창: 바깥을 누르거나 Esc를 누르면 닫힌다
   useEffect(() => {
@@ -451,6 +465,41 @@ function App() {
     setSyncConflict(null);
   }
 
+  function openDeleteAccount() {
+    setDeleteText("");
+    setDeleteError(false);
+    setDeleteOpen(true);
+  }
+
+  function closeDeleteAccount() {
+    if (!deleteBusy) setDeleteOpen(false);
+  }
+
+  // 계정과 계정 기록(user_data)을 지운다. 이 기기의 기록 키는 그대로 두고 동기화 정보만 지운다
+  async function deleteAccount() {
+    if (deleteBusy || deleteText !== "탈퇴") return;
+    setDeleteBusy(true);
+    setDeleteError(false);
+    const wasSyncReady = syncReady;
+    setSyncReady(false); // 지우는 동안 자동 저장이 다시 올리지 않게
+    const { error } = await supabase.rpc("delete_my_account");
+    if (error) {
+      setDeleteBusy(false);
+      setDeleteError(true);
+      setSyncReady(wasSyncReady); // 실패하면 자동 저장을 누르기 전 상태 그대로
+      return;
+    }
+    // 계정이 없어졌으니 서버에 묻지 않고 이 브라우저의 로그인 정보만 지운다
+    await supabase.auth.signOut({ scope: "local" });
+    localStorage.removeItem(SYNC_META_KEY);
+    setUser(null);
+    setSyncStatus(null);
+    setSyncConflict(null);
+    setDeleteBusy(false);
+    setDeleteOpen(false);
+    setAccountDeleted(true);
+  }
+
   // 이 브라우저의 기록 키(BACKUP_KEYS) 묶음 안쪽
   function readLocalData() {
     return buildBackup(key => localStorage.getItem(key)).data;
@@ -670,6 +719,7 @@ function App() {
                   )
                 )}
                 <button className="cal-today-button" onClick={logout}>로그아웃</button>
+                <button className="purpose-text-button danger" onClick={openDeleteAccount}>회원 탈퇴</button>
               </div>
             ) : (
               <div className="profile login-anchor" ref={loginBoxRef}>
@@ -705,6 +755,54 @@ function App() {
             로그인하지 못했어요. 다시 시도해 주세요.
             <button className="purpose-text-button" onClick={() => setLoginError(false)}>닫기</button>
           </p>
+        )}
+
+        {accountDeleted && (
+          <p className="account-notice" role="status">
+            탈퇴했어요. 이 기기의 기록은 그대로 있어요.
+            <button className="purpose-text-button" onClick={() => setAccountDeleted(false)}>닫기</button>
+          </p>
+        )}
+
+        {user && deleteOpen && (
+          <div className="sync-overlay" onMouseDown={e => e.target === e.currentTarget && closeDeleteAccount()}>
+            <div className="sync-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+              <h3 id="delete-title">회원 탈퇴</h3>
+              <ul className="delete-facts">
+                <li><strong>계정과 계정에 저장된 기록이 지워지고, 되돌릴 수 없어요.</strong></li>
+                <li>이 기기(브라우저)의 기록은 그대로 남아요. 로그인하지 않고 지금처럼 쓸 수 있어요.</li>
+                <li>카카오·구글 쪽 연결은 각 서비스의 계정 설정(연결된 앱)에서 따로 끊을 수 있어요.</li>
+              </ul>
+              <p className="sync-hint">
+                지우기 전에 기록을 파일로 받아 두려면 "백업 내보내기"를 누르세요.
+                <button className="cal-today-button" onClick={exportBackup}>백업 내보내기</button>
+              </p>
+              <label className="delete-confirm">
+                계속하려면 아래 칸에 <strong>탈퇴</strong>라고 써 주세요.
+                <input
+                  value={deleteText}
+                  onChange={e => setDeleteText(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && deleteAccount()}
+                  placeholder="탈퇴"
+                  disabled={deleteBusy}
+                  autoFocus
+                />
+              </label>
+              {deleteError && (
+                <p className="delete-error" role="alert">탈퇴하지 못했어요. 잠시 뒤 다시 시도해 주세요.</p>
+              )}
+              <div className="sync-actions">
+                <button className="practice-button" onClick={closeDeleteAccount} disabled={deleteBusy}>취소</button>
+                <button
+                  className="primary-button danger-button"
+                  onClick={deleteAccount}
+                  disabled={deleteBusy || deleteText !== "탈퇴"}
+                >
+                  {deleteBusy ? "탈퇴하는 중…" : "탈퇴하기"}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* 계정과 이 기기에 서로 다른 기록이 있을 때: 고르기 전에는 계정에 아무것도 저장하지 않는다 */}
