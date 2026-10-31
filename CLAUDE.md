@@ -27,10 +27,11 @@ src/
   App.jsx     앱 전체 (탭 6개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계 / 캘린더 / 작업실)
   Metronome.jsx  작업실 탭의 메트로놈 (Web Audio API로 소리 재생)
   Routine.jsx    작업실 탭의 "오늘의 루틴" 카드 (매일 체크하는 고정 연습 목록)
+  Tuner.jsx      작업실 탭의 튜너 (마이크로 음 높이 재기, 저장하는 값 없음)
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, routine.js, backup.js, auth.js, sync.js, tabs.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js)
               supabase.js = Supabase 연결 (키가 없으면 null)
 public/       파비콘, 아이콘
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
