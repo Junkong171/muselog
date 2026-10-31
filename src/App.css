@@ -330,6 +330,8 @@ select:focus-visible {
 .sync-dialog {
   width: 100%;
   max-width: 440px;
+  max-height: calc(100vh - 32px); /* 키가 작은 화면에서는 창 안에서 스크롤 */
+  overflow-y: auto;
   padding: 22px;
   border-radius: 16px;
   background: #fff;
@@ -415,6 +417,69 @@ select:focus-visible {
   background: #fbeff1;
   font-size: 12px;
   font-weight: 600;
+}
+
+/* ---------- 회원 탈퇴 ---------- */
+.account-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #5a4a8a;
+  background: #f4f1fa;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.delete-facts {
+  margin: 8px 0 14px;
+  padding-left: 18px;
+  color: #554d6b;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.delete-facts strong {
+  color: #c0475b;
+}
+
+.delete-confirm {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #554d6b;
+  font-size: 12px;
+}
+
+.delete-confirm input {
+  padding: 10px 12px;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  color: #3a3055;
+  background: #fcfbfe;
+  font-size: 13px;
+}
+
+.delete-error {
+  margin: 0 0 12px;
+  color: #c0475b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.primary-button.danger-button {
+  border-color: #c0475b;
+  background: #c0475b;
+}
+
+.primary-button.danger-button:disabled {
+  border-color: #e3c3ca;
+  background: #e3c3ca;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .breadcrumb {

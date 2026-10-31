@@ -4,7 +4,7 @@
 
 - React 19 + Vite, JavaScript (TypeScript 아님), 순수 CSS (UI 라이브러리 없음)
 - 백엔드 없음: 모든 데이터는 브라우저 localStorage에 저장된다.
-- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 로그인하면 기록 키 묶음(백업 형식, BACKUP_KEYS 10개)을 Supabase 표 `user_data`에 자동 저장·불러오기한다(F-010, 판단 로직 `src/lib/sync.js`). 표와 보안 규칙(RLS: 본인 줄만)은 `docs/supabase/user_data.sql`.
+- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 로그인하면 기록 키 묶음(백업 형식, BACKUP_KEYS 10개)을 Supabase 표 `user_data`에 자동 저장·불러오기한다(F-010, 판단 로직 `src/lib/sync.js`). 표와 보안 규칙(RLS: 본인 줄만)은 `docs/supabase/user_data.sql`. 회원 탈퇴(F-014)는 본인 계정만 지우는 함수 `delete_my_account`(`docs/supabase/delete_account.sql`)를 부르고, `user_data`는 함께 지워진다.
 
 ## 사용자 안내 방식
 
