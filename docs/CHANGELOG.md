@@ -4,6 +4,13 @@ MUSELOG에서 한 일을 날짜순으로 기록한다. (최신이 위)
 
 ## 2026-10-31
 
+### 개인정보처리방침 페이지 (브랜치 `feature/privacy-policy`, 명세 `docs/specs/F-015-privacy-policy.md`)
+- `public/privacy.html`: 앱과 따로 열리는 한 장짜리 방침 (`/privacy.html`). 한눈에 보기 + 13개 항목 (모으는·모으지 않는 정보, 목적과 근거, 보관·파기, 위탁, 국외 이전, 제3자 제공, 브라우저 저장 공간, 권리, 안전 조치, 14세 미만, 연락처, 변경)
+- 위탁: Supabase(서울 ap-northeast-2), Vercel(미국), Google Fonts(미국). 기록은 국외로 옮기지 않고, 접속 정보(IP·브라우저 정보)만 Vercel·Google로 가는 것을 국외 이전 표로 공개
+- 투두메이트·Todoist 처리방침, 개인정보위 작성지침(2025), 국외 이전 사례를 참고해 다듬음
+- 앱 푸터와 로그인 창에 "개인정보처리방침" 링크 (새 탭)
+- 검증: tester PASS 6 / FAIL 0 / 확인 불가 2 → 개발 서버 주소와 휴대폰 폭(375px)은 브라우저에서 확인. tester 제안 반영: Google Fonts 공개, 열람·수정 문장을 실제 동작(기록·일정·루틴은 지우고 다시 넣기)에 맞춤 (2026-10-31)
+
 ### 회원 탈퇴 (브랜치 `feature/account-delete`, 명세 `docs/specs/F-014-account-delete.md`)
 - 로그인 상태에서 프로필 옆 "회원 탈퇴" → 확인 창(되돌릴 수 없음, 이 기기 기록은 남음, 백업 내보내기, 카카오·구글 연결은 따로 끊기) → `탈퇴` 입력 시에만 "탈퇴하기"
 - 성공: Supabase 함수 `delete_my_account`(본인 `auth.users`만 삭제, `user_data`는 cascade) 호출 → 이 브라우저 로그아웃, `muselog-sync-meta` 삭제, "탈퇴했어요" 안내. 다른 기록 키는 그대로. 실패: 창 안 안내, 자동 저장 상태는 누르기 전 그대로

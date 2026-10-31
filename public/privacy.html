@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>개인정보처리방침 · MUSELOG</title>
+    <!-- 앱과 따로 열리는 한 장짜리 페이지 (F-015). 내용을 바꾸면 아래 시행일·변경 이력도 고친다 -->
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap');
+
+      :root {
+        --purple-dark: #9a8ebb;
+        --ink: #3a3055;
+        --text: #554d6b;
+        --muted: #8a8499;
+        --border: #e6e2ef;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        background: #f8f6fc;
+        font-family: 'Noto Sans KR', sans-serif;
+        font-size: 14px;
+        line-height: 1.8;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+      }
+
+      .page {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 28px 16px 60px;
+      }
+
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--ink);
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-decoration: none;
+      }
+
+      .brand img {
+        width: 36px;
+        height: 36px;
+      }
+
+      .back {
+        padding: 7px 14px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        color: #5a4a8a;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .back:hover {
+        background: #f4f1fa;
+      }
+
+      article {
+        padding: 32px 36px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: #fff;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        color: var(--ink);
+        font-size: 24px;
+      }
+
+      h2 {
+        margin: 32px 0 8px;
+        color: var(--ink);
+        font-size: 16px;
+      }
+
+      .lead {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .summary {
+        margin: 20px 0 0;
+        padding: 14px 18px;
+        border-radius: 12px;
+        background: #f4f1fa;
+        color: #5a4a8a;
+      }
+
+      .summary ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+      }
+
+      ul,
+      ol {
+        margin: 6px 0;
+        padding-left: 20px;
+      }
+
+      table {
+        width: 100%;
+        margin: 8px 0;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--ink);
+        background: #faf9fd;
+        font-weight: 700;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      a {
+        color: #7d6bb8;
+      }
+
+      .foot {
+        margin-top: 32px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      @media (max-width: 700px) {
+        article {
+          padding: 22px 18px;
+        }
+
+        h1 {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="top">
+        <a class="brand" href="/">
+          <img src="/logo.svg" alt="" />
+          MUSELOG
+        </a>
+        <a class="back" href="/">앱으로 돌아가기</a>
+      </header>
+
+      <article>
+        <h1>개인정보처리방침</h1>
+        <p class="lead">시행일: 2026년 10월 31일</p>
+        <p>
+          MUSELOG(이하 "서비스")는 음악 연습을 기록하는 개인 프로젝트 웹앱입니다.
+          서비스는 이용자의 개인정보를 소중히 다루며, 「개인정보 보호법」에 따라 어떤 정보를 왜 모으고,
+          어디에 얼마나 보관하며, 어떻게 지우는지 아래와 같이 알려 드립니다.
+        </p>
+
+        <div class="summary">
+          <strong>한눈에 보기</strong>
+          <ul>
+            <li>로그인하지 않으면 기록은 이 브라우저에만 저장되고, 서버로 보내지 않아요.</li>
+            <li>로그인하면 기록을 계정에 저장해 다른 기기에서도 볼 수 있어요.</li>
+            <li>튜너의 마이크 소리는 브라우저 안에서만 계산하고, 저장하거나 보내지 않아요.</li>
+            <li>광고나 방문 분석 도구를 쓰지 않고, 개인정보를 남에게 팔거나 넘기지 않아요.</li>
+            <li>"회원 탈퇴"를 누르면 계정과 계정 기록이 바로 지워져요.</li>
+            <li>계정 기록은 서울 지역 서버에 보관해요. 사이트를 여는 과정의 접속 정보만 해외 업체(Vercel, Google Fonts)를 거쳐요.</li>
+          </ul>
+        </div>
+
+        <h2>1. 모으는 개인정보</h2>
+        <p>서비스는 <strong>로그인한 경우에만</strong> 아래 정보를 처리합니다. 로그인은 선택이며, 로그인하지 않아도 모든 기능을 쓸 수 있습니다.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>언제</th><th>항목</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>구글로 로그인할 때</td>
+                <td>이메일 주소, 이름, 프로필 사진, 구글 계정 고유번호</td>
+              </tr>
+              <tr>
+                <td>카카오로 로그인할 때</td>
+                <td>닉네임, 카카오 계정 고유번호<br />(선택 동의한 경우) 프로필 사진, 이메일 주소</td>
+              </tr>
+              <tr>
+                <td>로그인한 상태로 앱을 쓸 때</td>
+                <td>
+                  연습 기록 묶음: 연습곡(제목, 아티스트, 파트, 진행률, 목적), 연습 기록(날짜, 시간, 곡, 메모),
+                  누적 연습 시간과 하루 목표, 캘린더 일정, 오늘의 루틴과 체크, 메트로놈 설정, 화면 설정(정렬, 탭 순서),
+                  마지막 저장 시각
+                </td>
+              </tr>
+              <tr>
+                <td>로그인·접속 과정에서 자동으로</td>
+                <td>로그인 시각, 접속 IP 주소, 브라우저 정보 (보안과 서비스 운영을 위해 아래 위탁업체가 처리)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>2. 모으지 않는 정보</h2>
+        <ul>
+          <li><strong>로그인하지 않은 경우</strong>: 연습 기록은 이용자 브라우저의 저장 공간(localStorage)에만 저장되며 서비스 서버로 보내지 않습니다.</li>
+          <li><strong>튜너 마이크</strong>: 마이크 소리는 이용자 브라우저 안에서 음 높이를 계산하는 데에만 쓰이며, 녹음·저장·전송하지 않습니다. 튜너를 끄거나 다른 화면으로 옮기면 마이크가 꺼집니다.</li>
+          <li>광고, 방문 분석, 추적 쿠키를 쓰지 않습니다.</li>
+        </ul>
+
+        <h2>3. 이용 목적과 처리 근거</h2>
+        <ul>
+          <li>로그인과 본인 확인</li>
+          <li>연습 기록을 계정에 저장하고, 다른 기기·브라우저에서 같은 기록을 불러오기</li>
+          <li>서비스 보안 유지와 오류 대응</li>
+        </ul>
+        <p>
+          이용자가 로그인을 선택해 계정 저장 기능을 쓰는 데 꼭 필요한 정보만 처리하며,
+          이는 이용자와의 서비스 약속을 지키기 위한 처리(「개인정보 보호법」 제15조 제1항 제4호)에 해당합니다.
+          위 목적 외에는 쓰지 않으며, 목적이 바뀌면 미리 알리고 필요한 경우 동의를 받습니다.
+        </p>
+
+        <h2>4. 보관 기간과 파기</h2>
+        <ul>
+          <li>계정 정보와 계정에 저장된 연습 기록은 <strong>회원 탈퇴할 때까지</strong> 보관하고, 탈퇴하면 <strong>즉시</strong> 지웁니다. 법령에 따라 따로 보관해야 하는 정보는 없습니다.</li>
+          <li><strong>탈퇴 방법</strong>: 앱에 로그인 → 오른쪽 위 "회원 탈퇴" → 안내를 읽고 "탈퇴"를 입력 → "탈퇴하기".</li>
+          <li><strong>파기 방법</strong>: 전자 파일은 복구할 수 없는 방법으로 삭제합니다. 종이로 출력해 보관하는 개인정보는 없습니다.</li>
+          <li>위탁업체의 장애 대비용 백업에는 지운 정보가 잠시 남아 있을 수 있으며, 업체의 백업 보관 주기에 따라 지워집니다. 이 백업은 서비스에서 다시 쓰지 않습니다.</li>
+          <li>탈퇴해도 이용자 브라우저에 저장된 기록은 서비스가 지울 수 없으므로 그대로 남습니다. 지우는 방법은 8번을 보세요.</li>
+          <li>위탁업체가 보안을 위해 남기는 접속 기록은 각 업체의 보관 정책에 따라 지워집니다.</li>
+        </ul>
+
+        <h2>5. 처리 위탁 (맡기는 곳)</h2>
+        <p>서비스는 직접 서버를 운영하지 않고, 아래 업체에 처리를 맡깁니다.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>업체</th><th>맡기는 일</th><th>처리 위치</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Supabase, Inc.</td>
+                <td>로그인 처리, 계정 정보와 연습 기록 보관</td>
+                <td>대한민국 서울 (ap-northeast-2)</td>
+              </tr>
+              <tr>
+                <td>Vercel Inc.</td>
+                <td>웹사이트 전송 (접속 기록을 보안·운영 목적으로 처리)</td>
+                <td>미국 (전송 서버는 이용자와 가까운 지역)</td>
+              </tr>
+              <tr>
+                <td>Google LLC (Google Fonts)</td>
+                <td>화면 글꼴 제공</td>
+                <td>미국</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          계정 정보와 연습 기록은 서울 지역 서버에만 보관합니다. 위탁업체가 바뀌면 이 방침에 알립니다.
+          로그인할 때 구글·카카오는 각 회사의 개인정보처리방침에 따라 로그인 정보를 처리합니다.
+        </p>
+
+        <h2>6. 국외 이전</h2>
+        <p>
+          연습 기록과 계정 정보는 국외로 옮기지 않습니다. 다만 사이트를 열 때 브라우저가 아래 해외 업체의 서버에
+          접속하므로, 접속에 필요한 정보가 국외에서 처리됩니다. 이는 서비스 제공(계약 이행)을 위한 국외 처리위탁입니다
+          (「개인정보 보호법」 제28조의8 제1항 제3호 가목).
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>받는 자 (연락처)</th><th>국가</th><th>항목</th><th>시기·방법</th><th>목적</th><th>보유 기간</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Vercel Inc.<br />(privacy@vercel.com)</td>
+                <td>미국</td>
+                <td>IP 주소, 브라우저 정보, 접속 시각</td>
+                <td>사이트에 접속할 때마다 인터넷으로 전송</td>
+                <td>웹사이트 전송, 보안</td>
+                <td>업체 보관 정책에 따름</td>
+              </tr>
+              <tr>
+                <td>Google LLC<br />(<a href="https://support.google.com/policies/contact/general_privacy_form" target="_blank" rel="noreferrer">개인정보 문의 양식</a>)</td>
+                <td>미국</td>
+                <td>IP 주소, 브라우저 정보</td>
+                <td>화면을 열 때 글꼴을 받으며 인터넷으로 전송</td>
+                <td>화면 글꼴 제공</td>
+                <td>업체 보관 정책에 따름</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          이 전송은 사이트를 여는 데 꼭 필요해서 따로 거부할 수 없습니다. 원하지 않으면 서비스 이용을 멈추면 되고,
+          궁금한 점은 아래 연락처로 문의해 주세요.
+        </p>
+
+        <h2>7. 제3자 제공</h2>
+        <p>서비스는 이용자의 개인정보를 제3자에게 제공하지 않습니다. 법령에 따라 요구되는 경우는 예외입니다.</p>
+
+        <h2>8. 브라우저 저장 공간과 쿠키</h2>
+        <ul>
+          <li>서비스는 이용자 브라우저의 저장 공간(localStorage)에 연습 기록과 화면 설정을 저장합니다. 로그인하면 로그인 상태를 유지하기 위한 정보도 함께 저장합니다.</li>
+          <li>이 정보는 이용자 기기에만 있으며, 광고·분석 목적의 쿠키나 다른 회사의 추적 도구(행태정보 수집)는 쓰지 않습니다.</li>
+          <li>
+            <strong>지우는 방법</strong>: 브라우저 설정에서 이 사이트의 데이터를 삭제하면 됩니다.
+            (엣지·크롬: 주소창 왼쪽 자물쇠 → 사이트 설정 또는 쿠키 및 사이트 데이터 → 데이터 삭제 / 사파리: 설정 → Safari → 고급 → 웹 사이트 데이터)
+            지우기 전에 "백업 내보내기"로 기록을 받아 두세요.
+          </li>
+        </ul>
+
+        <h2>9. 이용자의 권리</h2>
+        <ul>
+          <li><strong>열람·수정</strong>: 연습곡, 연습 기록, 일정, 루틴은 앱 화면에서 직접 볼 수 있습니다. 연습곡은 고칠 수 있고, 연습 기록·일정·루틴은 지우고 다시 넣을 수 있습니다.</li>
+          <li><strong>내보내기</strong>: 상단 "백업 내보내기"로 내 기록을 파일로 받을 수 있습니다.</li>
+          <li><strong>삭제·처리 정지</strong>: "회원 탈퇴"로 계정과 계정 기록을 지울 수 있습니다. 로그아웃하면 그 뒤로는 계정에 저장하지 않습니다.</li>
+          <li>
+            <strong>연결 끊기</strong>: 구글·카카오 쪽 연결은 각 서비스에서 끊을 수 있습니다.
+            구글: <a href="https://myaccount.google.com/connections" target="_blank" rel="noreferrer">Google 계정 → 서드 파티 연결</a>,
+            카카오: 카카오톡 → 설정 → 카카오계정 → 연결된 서비스 관리
+          </li>
+          <li>위 방법으로 어렵다면 아래 연락처로 요청해 주세요. 요청을 받은 날부터 10일 안에 처리하고 결과를 알려 드립니다. 법정대리인이나 위임을 받은 사람도 요청할 수 있습니다.</li>
+        </ul>
+
+        <h2>10. 안전성 확보 조치</h2>
+        <ul>
+          <li>서버의 기록은 로그인한 본인만 읽고 쓸 수 있도록 접근 규칙(행 수준 보안)을 적용합니다.</li>
+          <li>모든 통신은 암호화(HTTPS)됩니다.</li>
+          <li>비밀번호를 직접 받지 않고, 구글·카카오 로그인만 사용합니다.</li>
+          <li>관리 권한(서버 관리 키)은 운영자만 가지며, 사이트 코드에는 넣지 않습니다.</li>
+        </ul>
+
+        <h2>11. 만 14세 미만 아동</h2>
+        <p>
+          서비스는 만 14세 미만 아동의 회원 가입(로그인)을 받지 않습니다. 만 14세 미만은 로그인하지 않고 이용해 주세요.
+          만 14세 미만의 계정을 알게 되면 지체 없이 삭제합니다.
+        </p>
+
+        <h2>12. 개인정보 보호책임자와 연락처</h2>
+        <p>
+          서비스 운영자(개인정보 보호책임자)<br />
+          이메일: <a href="mailto:jsmun03@gmail.com">jsmun03@gmail.com</a>
+        </p>
+        <p>
+          개인정보 침해에 대한 상담은 아래 기관에도 할 수 있습니다.<br />
+          개인정보침해신고센터 (국번 없이 118, <a href="https://privacy.kisa.or.kr" target="_blank" rel="noreferrer">privacy.kisa.or.kr</a>),
+          개인정보분쟁조정위원회 (1833-6972, <a href="https://www.kopico.go.kr" target="_blank" rel="noreferrer">kopico.go.kr</a>)
+        </p>
+
+        <h2>13. 방침의 변경</h2>
+        <p>
+          이 방침이 바뀌면 시행 7일 전부터 이 페이지와 앱에 알립니다. 모으는 항목이나 이용 목적이 바뀌는 등
+          이용자 권리에 중요한 변경은 시행 30일 전부터 알립니다.
+        </p>
+        <ul>
+          <li>2026년 10월 31일: 처음 만듦</li>
+        </ul>
+
+        <p class="foot">
+          시행일: 2026년 10월 31일 (처음 만듦)<br />
+          MUSELOG · <a href="/">앱으로 돌아가기</a>
+        </p>
+      </article>
+    </div>
+  </body>
+</html>
