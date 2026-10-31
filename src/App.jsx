@@ -742,6 +742,7 @@ function App() {
                       로그인하면 기록이 계정에 자동 저장되고, 다른 기기에서도 같은 기록을 볼 수 있어요.
                       로그인하지 않아도 지금처럼 쓸 수 있어요.
                     </p>
+                    <a className="login-privacy" href="/privacy.html" target="_blank" rel="noreferrer">개인정보처리방침</a>
                     <button className="purpose-text-button" onClick={() => setLoginOpen(false)}>닫기</button>
                   </div>
                 )}
@@ -1403,7 +1404,10 @@ function App() {
         )}
 
         <footer className="footer">
-          <span>MUSELOG © 2026</span>
+          <span>
+            MUSELOG © 2026 ·{" "}
+            <a className="footer-link" href="/privacy.html" target="_blank" rel="noreferrer">개인정보처리방침</a>
+          </span>
           <span>MADE FOR THE LOVE OF MUSIC ♡</span>
         </footer>
       </main>

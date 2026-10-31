@@ -33,7 +33,7 @@ src/
   assets/     이미지
   lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js)
               supabase.js = Supabase 연결 (키가 없으면 null)
-public/       파비콘, 아이콘
+public/       파비콘, 로고(logo.svg), privacy.html(개인정보처리방침, 앱과 따로 열리는 페이지. 모으는 정보·맡기는 곳이 바뀌면 함께 고친다)
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 ```
 
