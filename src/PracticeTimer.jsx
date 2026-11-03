@@ -5,6 +5,7 @@ import {
   normalizeTimer,
   parseTimerMinutes,
   readTimer,
+  restAlertMinutes,
   restTimer,
   resumeTimer,
   startTimer,
@@ -32,6 +33,7 @@ function PracticeTimer({ songs, onSave }) {
   const [minutes, setMinutes] = useState("");
   const [note, setNote] = useState("");
   const [minutesError, setMinutesError] = useState(false);
+  const [closedAlert, setClosedAlert] = useState(0); // 닫은 휴식 알림의 분. 이보다 큰 알림만 보인다
 
   useEffect(() => {
     if (timer) localStorage.setItem(STORAGE_KEY, JSON.stringify(timer));
@@ -47,6 +49,7 @@ function PracticeTimer({ songs, onSave }) {
   function change(action) {
     const time = currentTime();
     setNow(time);
+    setClosedAlert(0);
     setTimer(current => action(current, time));
   }
 
@@ -135,8 +138,18 @@ function PracticeTimer({ songs, onSave }) {
 
   const reading = readTimer(timer, now);
   const resting = timer.status === "resting";
+  const alertMinutes = restAlertMinutes(timer, now);
   return (
     <section className={`practice-timer ${resting ? "resting" : "running"}`}>
+      {alertMinutes > closedAlert && (
+        <div className="rest-alert" role="alert">
+          <span>휴식한 지 {alertMinutes}분 지났어요</span>
+          <div className="timer-actions">
+            <button className="primary-button" onClick={() => change(resumeTimer)}>다시 시작</button>
+            <button className="practice-button" onClick={() => setClosedAlert(alertMinutes)}>닫기</button>
+          </div>
+        </div>
+      )}
       <p className="timer-summary" role="timer">
         {resting ? (
           <>휴식 중 <strong>{formatClock(reading.restMs)}</strong><span> · 연습 {formatClock(reading.practiceMs)}</span></>

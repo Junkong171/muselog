@@ -2536,3 +2536,25 @@ select:focus-visible {
   width: 100%;
   margin: 0;
 }
+
+.rest-alert {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  width: min(480px, calc(100% - 24px));
+  padding: 12px 16px;
+  border: 1px solid var(--purple);
+  border-radius: 14px;
+  color: #3a3055;
+  background: var(--purple-light);
+  box-shadow: 0 6px 18px rgba(37, 42, 51, 0.16);
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateX(-50%);
+}

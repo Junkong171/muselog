@@ -4,6 +4,7 @@ import {
   normalizeTimer,
   parseTimerMinutes,
   readTimer,
+  restAlertMinutes,
   restTimer,
   resumeTimer,
   startTimer,
@@ -41,6 +42,37 @@ describe("타이머 흐름", () => {
   it("시계가 거꾸로 가도 음수가 되지 않는다", () => {
     const timer = { status: "running", since: 5000, practiceMs: 2000, restMs: 0 };
     expect(readTimer(timer, 1000)).toEqual({ practiceMs: 2000, restMs: 0 });
+  });
+});
+
+describe("restAlertMinutes (휴식 알림)", () => {
+  const MINUTE = 60000;
+  const resting = restTimer(startTimer(0), 5 * MINUTE); // 연습 5분 뒤 휴식 시작
+
+  it("10분 전에는 0", () => {
+    expect(restAlertMinutes(resting, 5 * MINUTE)).toBe(0);
+    expect(restAlertMinutes(resting, 5 * MINUTE + 599000)).toBe(0);
+  });
+
+  it("10분마다 숫자가 바뀌고, 사이 시간은 지난 숫자로 읽는다", () => {
+    expect(restAlertMinutes(resting, 15 * MINUTE)).toBe(10);
+    expect(restAlertMinutes(resting, 25 * MINUTE)).toBe(20);
+    expect(restAlertMinutes(resting, 30 * MINUTE)).toBe(20);
+  });
+
+  it("다시 쉬면 이번 휴식부터 다시 센다", () => {
+    const running = resumeTimer(resting, 35 * MINUTE);
+    const again = restTimer(running, 40 * MINUTE);
+    expect(restAlertMinutes(again, 45 * MINUTE)).toBe(0);
+    expect(restAlertMinutes(again, 50 * MINUTE)).toBe(10);
+  });
+
+  it("연습 중이면 0", () => {
+    expect(restAlertMinutes(startTimer(0), 60 * MINUTE)).toBe(0);
+  });
+
+  it("시계가 거꾸로 가도 0", () => {
+    expect(restAlertMinutes(resting, 0)).toBe(0);
   });
 });
 
