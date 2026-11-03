@@ -4,7 +4,7 @@
 
 - React 19 + Vite, JavaScript (TypeScript 아님), 순수 CSS (UI 라이브러리 없음)
 - 백엔드 없음: 모든 데이터는 브라우저 localStorage에 저장된다.
-- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 로그인하면 기록 키 묶음(백업 형식, BACKUP_KEYS 11개)을 Supabase 표 `user_data`에 자동 저장·불러오기한다(F-010, 판단 로직 `src/lib/sync.js`). 표와 보안 규칙(RLS: 본인 줄만)은 `docs/supabase/user_data.sql`. 회원 탈퇴(F-014)는 본인 계정만 지우는 함수 `delete_my_account`(`docs/supabase/delete_account.sql`)를 부르고, `user_data`는 함께 지워진다.
+- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 로그인하면 기록 키 묶음(백업 형식, BACKUP_KEYS 12개)을 Supabase 표 `user_data`에 자동 저장·불러오기한다(F-010, 판단 로직 `src/lib/sync.js`). 표와 보안 규칙(RLS: 본인 줄만)은 `docs/supabase/user_data.sql`. 회원 탈퇴(F-014)는 본인 계정만 지우는 함수 `delete_my_account`(`docs/supabase/delete_account.sql`)를 부르고, `user_data`는 함께 지워진다.
 
 ## 사용자 안내 방식
 
@@ -24,16 +24,19 @@
 ```
 src/
   main.jsx    진입점
-  App.jsx     앱 전체 (탭 6개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계 / 캘린더 / 작업실)
+  App.jsx     앱 전체 (탭 8개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계 / 캘린더 / 작업실 / 영감 / 수첩)
   Metronome.jsx  작업실 탭의 메트로놈 (Web Audio API로 소리 재생)
   Routine.jsx    작업실 탭의 "오늘의 루틴" 카드 (매일 체크하는 고정 연습 목록)
   Tuner.jsx      작업실 탭의 튜너 (마이크로 음 높이 재기, 저장하는 값 없음)
+  Inspiration.jsx  영감 탭 (키워드 뽑기, 코드 진행과 들어보기, 아이디어 쓰기)
+  Notebook.jsx   수첩 탭 (저장한 아이디어 보기·수정·삭제)
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, inspiration.js)
+              inspirationData.js = 영감 탭의 단어·코드 진행 목록 (실제 곡 제목·가사는 넣지 않는다)
               supabase.js = Supabase 연결 (키가 없으면 null)
-public/       파비콘, 로고(logo.svg), privacy.html(개인정보처리방침, 앱과 따로 열리는 페이지. 모으는 정보·맡기는 곳이 바뀌면 함께 고친다)
+public/       파비콘, 로고(logo.svg), sounds/(영감 탭 들어보기 악기 음원, FluidR3 GM, CC BY 3.0. 앱에 출처 표시 필수), privacy.html(개인정보처리방침, 앱과 따로 열리는 페이지. 모으는 정보·맡기는 곳이 바뀌면 함께 고친다)
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 ```
 
@@ -47,6 +50,7 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-logs` | 연습 기록 배열 `[{ id, date(ISO), minutes, songTitle, note }]` |
 | `muselog-events` | 캘린더 일정 배열 `[{ id, date("YYYY-MM-DD"), time("HH:MM" 또는 "" = 종일), title, memo }]` |
 | `muselog-periods` | 연습 기간 메모 배열 `[{ id, start("YYYY-MM-DD"), end("YYYY-MM-DD"), title(1~40자), memo(0~200자) }]` (깨진 항목은 버리고, start > end면 바꿔서 읽음) |
+| `muselog-ideas` | 아이디어 메모 배열 `[{ id, createdAt(ISO), text(1~500자), keywords: [문자열], key(조, 코드 없으면 ""), chords: [코드 이름] }]` (글자 없는 항목은 버리고, 빠진 항목은 기본값으로 읽음) |
 | `muselog-song-sort` | 연습곡 정렬 기준 (문자열 `"added"` / `"title"` / `"progress"`, 없거나 깨지면 `"added"`) |
 | `muselog-metronome` | 메트로놈 설정 `{ bpm(10~300), beats(2/3/4/6), accents(강조할 박 번호 배열, 1~6), subdivision(1~4, 리듬: ♩ ♫ 셋잇단음표 ♬) }` (없거나 깨진 항목은 기본값 120 / 4 / [1] / 1, 예전 `accent: true/false`는 `[1]` / `[]`로 읽음) |
 | `muselog-routine` | 고정 연습 루틴 목록 `[{ id, title(1~40자) }]` (배열 순서 = 보이는 순서, 깨진 항목은 버림) |

@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_TABS, isDefaultTabOrder, moveTab, normalizeTabOrder, TAB_ICONS } from "./tabs";
 
 describe("normalizeTabOrder (저장된 탭 순서 읽기)", () => {
-  it("기본 순서는 6개 탭, 탭마다 아이콘이 있다", () => {
-    expect(DEFAULT_TABS).toEqual(["대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더", "작업실"]);
+  it("기본 순서는 8개 탭, 탭마다 아이콘이 있다", () => {
+    expect(DEFAULT_TABS).toEqual(["대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더", "작업실", "영감", "수첩"]);
     DEFAULT_TABS.forEach(tab => expect(TAB_ICONS[tab]).toBeTruthy());
   });
 
   it("올바른 순서는 그대로", () => {
-    const order = ["작업실", "대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더"];
+    const order = ["작업실", "대시보드", "내 연습곡", "연습 기록", "연습 통계", "캘린더", "영감", "수첩"];
     expect(normalizeTabOrder(order)).toEqual(order);
   });
 
@@ -26,6 +26,8 @@ describe("normalizeTabOrder (저장된 탭 순서 읽기)", () => {
       "내 연습곡",
       "연습 기록",
       "연습 통계",
+      "영감",
+      "수첩",
     ]);
   });
 
