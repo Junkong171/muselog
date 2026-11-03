@@ -1,5 +1,5 @@
 // 계정 동기화 판단 (순수 함수). 실제 서버 읽기·쓰기는 App.jsx에서 supabase로 한다.
-// "data"는 백업 묶음 안쪽의 { 9개 키: 값 } 객체다 (buildBackup(...).data).
+// "data"는 백업 묶음 안쪽의 { 12개 키: 값 } 객체다 (buildBackup(...).data).
 import { INITIAL_SONGS } from "./songs";
 
 export const SYNC_META_KEY = "muselog-sync-meta";
@@ -42,10 +42,10 @@ export function normalizeSyncMeta(value) {
 
 const list = value => (Array.isArray(value) ? value : []);
 
-// 비어 있음: 연습 기록·일정·연습 기간·루틴이 하나도 없고, 연습곡이 없거나 처음 깔리는 예시 곡 3개 그대로
+// 비어 있음: 연습 기록·일정·연습 기간·아이디어·루틴이 하나도 없고, 연습곡이 없거나 처음 깔리는 예시 곡 3개 그대로
 export function isEmptyData(data) {
   const d = data ?? {};
-  if (list(d["muselog-logs"]).length || list(d["muselog-events"]).length || list(d["muselog-periods"]).length || list(d["muselog-routine"]).length) {
+  if (list(d["muselog-logs"]).length || list(d["muselog-events"]).length || list(d["muselog-periods"]).length || list(d["muselog-ideas"]).length || list(d["muselog-routine"]).length) {
     return false;
   }
   const songs = list(d["muselog-songs"]);
@@ -59,7 +59,17 @@ export function isEmptyData(data) {
 // 선택 창에 보여 줄 개수
 export function summarizeData(data) {
   const d = data ?? {};
-  return { logs: list(d["muselog-logs"]).length, songs: list(d["muselog-songs"]).length };
+  return {
+    logs: list(d["muselog-logs"]).length,
+    songs: list(d["muselog-songs"]).length,
+    periods: list(d["muselog-periods"]).length,
+    ideas: list(d["muselog-ideas"]).length,
+  };
+}
+
+// "연습 기록 2개 · 연습곡 1곡 · 연습 기간 1개 · 아이디어 3개"
+export function formatSummary({ logs, songs, periods, ideas }) {
+  return `연습 기록 ${logs}개 · 연습곡 ${songs}곡 · 연습 기간 ${periods}개 · 아이디어 ${ideas}개`;
 }
 
 // 무엇을 할지 정한다.

@@ -23,8 +23,9 @@ const sample = {
 };
 
 describe("buildBackup", () => {
-  it("11개 키가 정해져 있다 (탭 순서, 연습 기간 포함)", () => {
-    expect(BACKUP_KEYS).toHaveLength(11);
+  it("12개 키가 정해져 있다 (탭 순서, 연습 기간, 아이디어 포함)", () => {
+    expect(BACKUP_KEYS).toHaveLength(12);
+    expect(BACKUP_KEYS).toContain("muselog-ideas");
     expect(BACKUP_KEYS).toContain("muselog-periods");
     expect(BACKUP_KEYS).toContain("muselog-tab-order");
     expect(BACKUP_KEYS.every(k => k.startsWith("muselog-"))).toBe(true);

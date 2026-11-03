@@ -1123,6 +1123,8 @@ select:focus-visible {
   }
 
   .sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
     width: 100%;
     padding: 15px 16px 12px;
     border-right: 0;
@@ -1130,6 +1132,7 @@ select:focus-visible {
   }
 
   .brand {
+    width: 100%;
     margin: 0 0 18px;
   }
 
@@ -1141,7 +1144,7 @@ select:focus-visible {
   .sidebar .nav-item {
     display: inline-flex;
     width: auto;
-    margin: 0 5px 0 0;
+    margin: 0 5px 5px 0;
     padding: 10px 12px;
   }
 
@@ -1765,6 +1768,224 @@ select:focus-visible {
   color: #c0475b;
   font-size: 12px;
   font-weight: 600;
+}
+
+/* ---------- 영감 ---------- */
+.insp-keywords {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.insp-keyword {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 18px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: #3a3055;
+  background: #fff;
+}
+
+.insp-keyword:hover {
+  background: var(--cream);
+}
+
+.insp-keyword strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+
+.insp-keyword span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.insp-keyword.pinned {
+  border-color: #8a74d1;
+  background: #f0ebfa;
+}
+
+.insp-keyword.pinned span {
+  color: #6f5bb5;
+  font-weight: 700;
+}
+
+.insp-selects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.insp-selects label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.insp-selects select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  color: #3a3055;
+  background: #fcfbfe;
+  font-size: 12px;
+}
+
+.insp-chords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.insp-chord {
+  min-width: 62px;
+  padding: 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: #3a3055;
+  background: var(--cream);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.insp-chord.playing {
+  border-color: #8a74d1;
+  color: #fff;
+  background: #8a74d1;
+}
+
+.insp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.insp-error {
+  margin: 10px 0 0;
+}
+
+.insp-credit {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.insp-credit a {
+  color: inherit;
+}
+
+.insp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.insp-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.insp-form-row label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.insp-form-row .primary-button {
+  margin-left: auto;
+}
+
+.insp-form textarea,
+.insp-idea textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  color: #3a3055;
+  background: #fcfbfe;
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.insp-notebook-link,
+.insp-notebook-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.insp-notebook-link {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.insp-idea {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.insp-idea-text {
+  margin: 0 0 10px;
+  color: #3a3055;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.insp-idea-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.insp-idea-meta {
+  display: flex;
+  flex: 1 1 200px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .insp-keyword {
+    padding: 14px 6px;
+  }
+
+  .insp-keyword strong {
+    font-size: 13px;
+  }
 }
 
 /* ---------- 작업실 (메트로놈) ---------- */

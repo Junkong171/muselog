@@ -36,14 +36,17 @@ import {
   sortSongs,
 } from "./lib/songs";
 import { normalizeMetronome } from "./lib/metronome";
+import { normalizeIdeas } from "./lib/inspiration";
 import Metronome from "./Metronome";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
+import Inspiration from "./Inspiration";
+import Notebook from "./Notebook";
 import Routine, { RoutineChecklist } from "./Routine";
 import Tuner from "./Tuner";
 import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/backup";
 import { authErrorFromUrl, displayName } from "./lib/auth";
 import { supabase } from "./lib/supabase";
-import { decideSync, hashData, normalizeSyncMeta, summarizeData, SYNC_META_KEY } from "./lib/sync";
+import { decideSync, formatSummary, hashData, normalizeSyncMeta, summarizeData, SYNC_META_KEY } from "./lib/sync";
 import { DEFAULT_TABS, isDefaultTabOrder, moveTab, normalizeTabOrder, TAB_ICONS } from "./lib/tabs";
 
 const CAL_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -110,6 +113,7 @@ function App() {
   const [timeListFiltered, setTimeListFiltered] = useState(false);
   const [timeError, setTimeError] = useState(false);
   const [periods, setPeriods] = useState(() => normalizePeriods(loadData("muselog-periods", [])));
+  const [ideas, setIdeas] = useState(() => normalizeIdeas(loadData("muselog-ideas", [])));
   const [periodStart, setPeriodStart] = useState(null); // null = 달력에서 고른 날짜를 따라감
   const [periodEnd, setPeriodEnd] = useState(null);
   const [periodTitle, setPeriodTitle] = useState("");
@@ -191,6 +195,10 @@ function App() {
   }, [periods]);
 
   useEffect(() => {
+    localStorage.setItem("muselog-ideas", JSON.stringify(ideas));
+  }, [ideas]);
+
+  useEffect(() => {
     localStorage.setItem("muselog-song-sort", JSON.stringify(songSort));
   }, [songSort]);
 
@@ -225,7 +233,7 @@ function App() {
     if (meta.userId === userId && hashData(readLocalData()) === meta.hash) return;
     const timer = setTimeout(() => uploadLocal(userId), 2000); // 올리기 시작하면 "저장 중…"
     return () => clearTimeout(timer);
-  }, [userId, syncReady, songs, minutes, goal, logs, events, periods, songSort, metronome, routine, routineChecks, tabOrder]);
+  }, [userId, syncReady, songs, minutes, goal, logs, events, periods, ideas, songSort, metronome, routine, routineChecks, tabOrder]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -884,12 +892,12 @@ function App() {
                   <strong>계정 기록</strong>
                   <span>마지막 저장 {new Date(syncConflict.cloud.updatedAt).toLocaleString("ko-KR")}</span>
                   <span>
-                    연습 기록 {summarizeData(syncConflict.cloud.data).logs}개 · 연습곡 {summarizeData(syncConflict.cloud.data).songs}곡
+                    {formatSummary(summarizeData(syncConflict.cloud.data))}
                   </span>
                 </div>
                 <div>
                   <strong>이 기기 기록</strong>
-                  <span>연습 기록 {syncConflict.local.logs}개 · 연습곡 {syncConflict.local.songs}곡</span>
+                  <span>{formatSummary(syncConflict.local)}</span>
                 </div>
               </div>
               <p className="sync-hint">
@@ -922,8 +930,8 @@ function App() {
           </section>
         )}
 
-        {/* 작업실에서는 도구가 바로 보이도록 큰 카드 대신 한 줄 요약 */}
-        {activeTab === "작업실" ? (
+        {/* 작업실·영감·수첩에서는 내용이 바로 보이도록 큰 카드 대신 한 줄 요약 */}
+        {["작업실", "영감", "수첩"].includes(activeTab) ? (
         <section className="stats-strip" aria-label="연습 요약">
           <span>오늘 <strong>{todayMinutes}분</strong> / 목표 {goal}분 ({Math.min(Math.round((todayMinutes / Math.max(goal, 1)) * 100), 100)}%)</span>
           <div className="progress-track">
@@ -1341,6 +1349,14 @@ function App() {
               )}
             </section>
           </>
+        ) : activeTab === "영감" ? (
+          <Inspiration
+            ideaCount={ideas.length}
+            onChangeIdeas={setIdeas}
+            onOpenNotebook={() => setActiveTab("수첩")}
+          />
+        ) : activeTab === "수첩" ? (
+          <Notebook ideas={ideas} onChangeIdeas={setIdeas} onOpenInspiration={() => setActiveTab("영감")} />
         ) : activeTab === "작업실" ? (
           <>
             <section className="section-heading">
