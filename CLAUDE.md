@@ -28,12 +28,13 @@ src/
   Metronome.jsx  작업실 탭의 메트로놈 (Web Audio API로 소리 재생)
   Routine.jsx    작업실 탭의 "오늘의 루틴" 카드 (매일 체크하는 고정 연습 목록)
   Tuner.jsx      작업실 탭의 튜너 (마이크로 음 높이 재기, 저장하는 값 없음)
+  PracticeTimer.jsx  모든 탭 위쪽의 연습 타이머 (시작·휴식·종료 후 연습 기록에 저장)
   Inspiration.jsx  영감 탭 (키워드 뽑기, 코드 진행과 들어보기, 아이디어 쓰기)
   Notebook.jsx   수첩 탭 (저장한 아이디어 보기·수정·삭제)
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, inspiration.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, inspiration.js, timer.js)
               inspirationData.js = 영감 탭의 단어·코드 진행 목록 (실제 곡 제목·가사는 넣지 않는다)
               supabase.js = Supabase 연결 (키가 없으면 null)
 public/       파비콘, 로고(logo.svg), sounds/(영감 탭 들어보기 악기 음원, FluidR3 GM, CC BY 3.0. 앱에 출처 표시 필수), privacy.html(개인정보처리방침, 앱과 따로 열리는 페이지. 모으는 정보·맡기는 곳이 바뀌면 함께 고친다)
@@ -56,6 +57,7 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-routine` | 고정 연습 루틴 목록 `[{ id, title(1~40자) }]` (배열 순서 = 보이는 순서, 깨진 항목은 버림) |
 | `muselog-routine-checks` | 오늘 체크한 루틴 `{ date("YYYY-MM-DD"), done: [id] }` (date가 오늘이 아니면 체크 없음으로 읽음) |
 | `muselog-tab-order` | 사이드바 탭 순서 (탭 이름 배열, 없거나 깨지면 기본 순서. 모르는 이름·중복은 버리고 빠진 탭은 뒤에 붙임 — `normalizeTabOrder`) |
+| `muselog-timer` | 지금 재는 연습 타이머 `{ status("running"/"resting"), since(시각 숫자), practiceMs, restMs }`, 재고 있지 않으면 키 없음. 이 기기 전용이라 백업·동기화에 넣지 않는다. 깨지면 처음 상태 |
 | `muselog-sync-meta` | 계정 동기화 정보 `{ userId, syncedAt(서버 시각), hash(마지막으로 맞춘 기록 지문) }`. 백업에는 넣지 않는다. 없거나 깨지면 "맞춘 적 없음" |
 
 새 키를 추가하면 `src/lib/backup.js`의 `BACKUP_KEYS`에도 넣는다(기록 키라면). 그래야 백업과 계정 동기화에 함께 담긴다. (상단 바 "백업 내보내기/불러오기"가 이 목록의 키만 담고 되살린다. 백업 파일 형식: `{ app: "muselog", version: 1, exportedAt, data: { 키: 값 } }`)
