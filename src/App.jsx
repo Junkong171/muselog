@@ -41,6 +41,7 @@ import Metronome from "./Metronome";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
 import Inspiration from "./Inspiration";
 import Notebook from "./Notebook";
+import PracticeTimer from "./PracticeTimer";
 import Routine, { RoutineChecklist } from "./Routine";
 import Tuner from "./Tuner";
 import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/backup";
@@ -302,7 +303,7 @@ function App() {
     setEditingSongId(null);
   }
 
-  // 연습 기록 탭과 작업실 메트로놈이 함께 쓰는 기록 저장
+  // 연습 기록 탭, 작업실 메트로놈, 연습 타이머가 함께 쓰는 기록 저장
   function recordPractice(duration, songId, note) {
     const song = songs.find(s => String(s.id) === songId);
 
@@ -825,6 +826,8 @@ function App() {
             )}
           </div>
         </header>
+
+        <PracticeTimer songs={songs} onSave={recordPractice} />
 
         {loginError && (
           <p className="login-error" role="alert">
