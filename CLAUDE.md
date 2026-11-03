@@ -4,7 +4,7 @@
 
 - React 19 + Vite, JavaScript (TypeScript 아님), 순수 CSS (UI 라이브러리 없음)
 - 백엔드 없음: 모든 데이터는 브라우저 localStorage에 저장된다.
-- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 로그인하면 기록 키 묶음(백업 형식, BACKUP_KEYS 10개)을 Supabase 표 `user_data`에 자동 저장·불러오기한다(F-010, 판단 로직 `src/lib/sync.js`). 표와 보안 규칙(RLS: 본인 줄만)은 `docs/supabase/user_data.sql`. 회원 탈퇴(F-014)는 본인 계정만 지우는 함수 `delete_my_account`(`docs/supabase/delete_account.sql`)를 부르고, `user_data`는 함께 지워진다.
+- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 로그인하면 기록 키 묶음(백업 형식, BACKUP_KEYS 11개)을 Supabase 표 `user_data`에 자동 저장·불러오기한다(F-010, 판단 로직 `src/lib/sync.js`). 표와 보안 규칙(RLS: 본인 줄만)은 `docs/supabase/user_data.sql`. 회원 탈퇴(F-014)는 본인 계정만 지우는 함수 `delete_my_account`(`docs/supabase/delete_account.sql`)를 부르고, `user_data`는 함께 지워진다.
 
 ## 사용자 안내 방식
 
@@ -31,7 +31,7 @@ src/
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js)
               supabase.js = Supabase 연결 (키가 없으면 null)
 public/       파비콘, 로고(logo.svg), privacy.html(개인정보처리방침, 앱과 따로 열리는 페이지. 모으는 정보·맡기는 곳이 바뀌면 함께 고친다)
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
@@ -46,6 +46,7 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-goal` | 하루 목표 시간 (숫자, 분) |
 | `muselog-logs` | 연습 기록 배열 `[{ id, date(ISO), minutes, songTitle, note }]` |
 | `muselog-events` | 캘린더 일정 배열 `[{ id, date("YYYY-MM-DD"), time("HH:MM" 또는 "" = 종일), title, memo }]` |
+| `muselog-periods` | 연습 기간 메모 배열 `[{ id, start("YYYY-MM-DD"), end("YYYY-MM-DD"), title(1~40자), memo(0~200자) }]` (깨진 항목은 버리고, start > end면 바꿔서 읽음) |
 | `muselog-song-sort` | 연습곡 정렬 기준 (문자열 `"added"` / `"title"` / `"progress"`, 없거나 깨지면 `"added"`) |
 | `muselog-metronome` | 메트로놈 설정 `{ bpm(10~300), beats(2/3/4/6), accents(강조할 박 번호 배열, 1~6), subdivision(1~4, 리듬: ♩ ♫ 셋잇단음표 ♬) }` (없거나 깨진 항목은 기본값 120 / 4 / [1] / 1, 예전 `accent: true/false`는 `[1]` / `[]`로 읽음) |
 | `muselog-routine` | 고정 연습 루틴 목록 `[{ id, title(1~40자) }]` (배열 순서 = 보이는 순서, 깨진 항목은 버림) |

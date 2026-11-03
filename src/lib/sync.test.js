@@ -58,6 +58,7 @@ describe("isEmptyData, summarizeData", () => {
     expect(isEmptyData(used)).toBe(false);
     expect(isEmptyData({ ...sample, "muselog-events": [{ id: 1 }] })).toBe(false);
     expect(isEmptyData({ ...sample, "muselog-routine": [{ id: 1, title: "스케일" }] })).toBe(false);
+    expect(isEmptyData({ ...sample, "muselog-periods": [{ id: 1, title: "스케일" }] })).toBe(false);
     expect(isEmptyData({ "muselog-songs": [...INITIAL_SONGS, { id: 4, title: "새 곡" }] })).toBe(false);
     expect(isEmptyData({ "muselog-songs": [{ id: 1, title: "바꾼 제목" }, INITIAL_SONGS[1], INITIAL_SONGS[2]] })).toBe(false);
   });
@@ -92,6 +93,13 @@ describe("decideSync — 처음 로그인 (이 계정과 맞춘 적 없음)", ()
     const metaB = { userId: "user-b", syncedAt: "2026-10-31T09:00:00Z", hash: hashData(used) };
     expect(decideSync({ cloud: { ...at("2026-10-30T00:00:00Z"), data: other }, meta: metaB, userId: USER, localData: used })).toBe("ask");
     expect(decideSync({ cloud: null, meta: metaB, userId: USER, localData: used })).toBe("upload");
+  });
+});
+
+describe("decideSync — 연습 기간 메모만 있는 브라우저", () => {
+  it("처음 로그인해도 덮어쓰지 않고 묻는다", () => {
+    const localData = { ...sample, "muselog-periods": [{ id: 1, start: "2026-03-01", end: "2026-05-31", title: "스케일", memo: "" }] };
+    expect(decideSync({ cloud: { ...at("2026-10-31T00:00:00Z"), data: used }, meta: normalizeSyncMeta(null), userId: USER, localData })).toBe("ask");
   });
 });
 
