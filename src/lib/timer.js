@@ -4,6 +4,7 @@
 import { elapsedToMinutes } from "./metronome";
 
 export const MAX_TIMER_MINUTES = 600;
+const REST_ALERT_MS = 10 * 60 * 1000;
 
 const isTime = value => Number.isFinite(value) && value >= 0;
 
@@ -34,6 +35,12 @@ function switchTo(status, timer, now) {
 
 export const restTimer = (timer, now) => switchTo("resting", timer, now);
 export const resumeTimer = (timer, now) => switchTo("running", timer, now);
+
+// 이번 휴식이 10분 단위로 몇 분 지났는지. 휴식 중이 아니거나 10분 전이면 0
+export function restAlertMinutes(timer, now) {
+  if (timer.status !== "resting") return 0;
+  return Math.floor(Math.max(0, now - timer.since) / REST_ALERT_MS) * 10;
+}
 
 // 저장 칸에 채울 분. 1분보다 짧아도 1분으로 친다
 export function timerMinutes(practiceMs) {
