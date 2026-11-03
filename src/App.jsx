@@ -16,6 +16,14 @@ import {
   upcomingEvents,
 } from "./lib/calendar";
 import {
+  formatPeriodRange,
+  MAX_PERIOD_MEMO_LENGTH,
+  MAX_PERIOD_TITLE_LENGTH,
+  normalizePeriods,
+  periodsOnDate,
+  sortPeriods,
+} from "./lib/periods";
+import {
   DEFAULT_PART,
   INITIAL_SONGS,
   MAX_PURPOSE_LENGTH,
@@ -101,11 +109,19 @@ function App() {
   const [openTimeList, setOpenTimeList] = useState(null); // "hour" | "minute" | null
   const [timeListFiltered, setTimeListFiltered] = useState(false);
   const [timeError, setTimeError] = useState(false);
+  const [periods, setPeriods] = useState(() => normalizePeriods(loadData("muselog-periods", [])));
+  const [periodStart, setPeriodStart] = useState(null); // null = 달력에서 고른 날짜를 따라감
+  const [periodEnd, setPeriodEnd] = useState(null);
+  const [periodTitle, setPeriodTitle] = useState("");
+  const [periodMemo, setPeriodMemo] = useState("");
+  const [editingPeriodId, setEditingPeriodId] = useState(null);
+  const [periodError, setPeriodError] = useState(false);
   const [metronome, setMetronome] = useState(() => normalizeMetronome(loadData("muselog-metronome", null)));
   const [routine, setRoutine] = useState(() => normalizeRoutine(loadData("muselog-routine", [])));
   // { date, done } 그대로 두고, 오늘 것인지는 화면을 그릴 때 todayChecks로 판단한다
   const [routineChecks, setRoutineChecks] = useState(() => loadData("muselog-routine-checks", null));
   const minuteInputRef = useRef(null);
+  const periodTitleRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem("muselog-songs", JSON.stringify(songs));
@@ -171,6 +187,10 @@ function App() {
   }, [events]);
 
   useEffect(() => {
+    localStorage.setItem("muselog-periods", JSON.stringify(periods));
+  }, [periods]);
+
+  useEffect(() => {
     localStorage.setItem("muselog-song-sort", JSON.stringify(songSort));
   }, [songSort]);
 
@@ -205,7 +225,7 @@ function App() {
     if (meta.userId === userId && hashData(readLocalData()) === meta.hash) return;
     const timer = setTimeout(() => uploadLocal(userId), 2000); // 올리기 시작하면 "저장 중…"
     return () => clearTimeout(timer);
-  }, [userId, syncReady, songs, minutes, goal, logs, events, songSort, metronome, routine, routineChecks, tabOrder]);
+  }, [userId, syncReady, songs, minutes, goal, logs, events, periods, songSort, metronome, routine, routineChecks, tabOrder]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -400,6 +420,52 @@ function App() {
 
   function deleteEvent(id) {
     setEvents(current => current.filter(event => event.id !== id));
+  }
+
+  function resetPeriodForm() {
+    setPeriodStart(null);
+    setPeriodEnd(null);
+    setPeriodTitle("");
+    setPeriodMemo("");
+    setEditingPeriodId(null);
+    setPeriodError(false);
+  }
+
+  function savePeriod(e) {
+    e.preventDefault();
+    // 빈 제목·빈 날짜는 걸러지고, 시작일과 끝일이 뒤집혔으면 바꿔 준다
+    const [period] = normalizePeriods([{
+      id: editingPeriodId ?? Date.now(),
+      start: periodStart ?? selectedDate,
+      end: periodEnd ?? selectedDate,
+      title: periodTitle,
+      memo: periodMemo,
+    }]);
+    if (!period) {
+      setPeriodError(true);
+      return;
+    }
+    setPeriods(current =>
+      editingPeriodId === null
+        ? [...current, period]
+        : current.map(p => (p.id === editingPeriodId ? period : p)));
+    resetPeriodForm();
+  }
+
+  function editPeriod(period) {
+    setPeriodStart(period.start);
+    setPeriodEnd(period.end);
+    setPeriodTitle(period.title);
+    setPeriodMemo(period.memo);
+    setEditingPeriodId(period.id);
+    setPeriodError(false);
+    periodTitleRef.current?.focus();
+  }
+
+  function deletePeriod(period) {
+    if (!window.confirm(`'${period.title}' 연습 기간을 삭제할까요?`)) return;
+    setPeriods(current => current.filter(p => p.id !== period.id));
+    if (editingPeriodId === period.id) resetPeriodForm();
   }
 
   function moveMonth(offset) {
@@ -626,6 +692,7 @@ function App() {
   // ---------- 캘린더 계산 ----------
   const calCells = getMonthGrid(calMonth.getFullYear(), calMonth.getMonth());
   const selectedEvents = sortEvents(events.filter(event => event.date === selectedDate));
+  const selectedPeriods = periodsOnDate(periods, selectedDate);
   const upcoming = upcomingEvents(events, now);
   const nextEvent = upcoming[0];
 
@@ -1087,6 +1154,7 @@ function App() {
                 {calCells.map((cell, i) => {
                   if (!cell) return <span className="cal-blank" key={`blank-${i}`} />;
                   const dayEvents = sortEvents(events.filter(event => event.date === cell.key));
+                  const dayPeriods = periodsOnDate(periods, cell.key);
                   return (
                     <button
                       key={cell.key}
@@ -1094,6 +1162,11 @@ function App() {
                       onClick={() => setSelectedDate(cell.key)}
                     >
                       <span className="cal-date">{cell.day}</span>
+                      {dayPeriods.slice(0, 2).map(period => (
+                        <span className="cal-period" key={period.id} title={period.title}>
+                          {(cell.key === period.start || cell.day === 1) && period.title}
+                        </span>
+                      ))}
                       {dayEvents.slice(0, 2).map(event => (
                         <span className="cal-event" key={event.id}>
                           {event.time ? `${event.time} ` : ""}{event.title}
@@ -1150,6 +1223,20 @@ function App() {
                 <button className="primary-button" type="submit">일정 저장</button>
               </form>
               {timeError && <p className="time-error">시간을 확인해 주세요. (시 0~23, 분 0~59)</p>}
+              {selectedPeriods.length > 0 && (
+                <div className="event-list">
+                  <p className="period-day-head">이 날의 연습 기간</p>
+                  {selectedPeriods.map(period => (
+                    <div className="event-row period-row" key={period.id}>
+                      <div className="event-info">
+                        <strong>{period.title}</strong>
+                        <p>{formatPeriodRange(period)}</p>
+                        {period.memo && <p className="period-memo">{period.memo}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               {selectedEvents.length > 0 && (
                 <div className="event-list">
                   {selectedEvents.map(event => (
@@ -1162,6 +1249,70 @@ function App() {
                       <button className="practice-button" onClick={() => deleteEvent(event.id)}>
                         삭제
                       </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="chart-card">
+              <div className="chart-head">
+                <h3>연습 기간 메모</h3>
+                <span>언제 무엇을 중점으로 연습했는지</span>
+              </div>
+              <form className="song-form" onSubmit={savePeriod}>
+                <label className="period-date">
+                  시작일
+                  <input
+                    type="date"
+                    value={periodStart ?? selectedDate}
+                    onChange={e => setPeriodStart(e.target.value)}
+                  />
+                </label>
+                <label className="period-date">
+                  끝일
+                  <input
+                    type="date"
+                    value={periodEnd ?? selectedDate}
+                    onChange={e => setPeriodEnd(e.target.value)}
+                  />
+                </label>
+                <input
+                  ref={periodTitleRef}
+                  value={periodTitle}
+                  onChange={e => setPeriodTitle(e.target.value)}
+                  placeholder="중점 연습 (예: 기타 코드 전환)"
+                  aria-label="중점 연습"
+                  maxLength={MAX_PERIOD_TITLE_LENGTH}
+                />
+                <input
+                  value={periodMemo}
+                  onChange={e => setPeriodMemo(e.target.value)}
+                  placeholder="메모 (선택)"
+                  aria-label="메모"
+                  maxLength={MAX_PERIOD_MEMO_LENGTH}
+                />
+                <button className="primary-button" type="submit">
+                  {editingPeriodId === null ? "기간 저장" : "수정 저장"}
+                </button>
+                {editingPeriodId !== null && (
+                  <button className="practice-button" type="button" onClick={resetPeriodForm}>취소</button>
+                )}
+              </form>
+              {periodError && <p className="time-error">중점 연습과 시작일·끝일을 모두 적어 주세요.</p>}
+              {periods.length === 0 ? (
+                <p className="chart-empty">아직 적어 둔 연습 기간이 없어요.</p>
+              ) : (
+                <div className="event-list">
+                  {sortPeriods(periods).map(period => (
+                    <div className="event-row period-row" key={period.id}>
+                      <div className="event-info">
+                        <strong>{period.title}</strong>
+                        <p>{formatPeriodRange(period)}</p>
+                        {period.memo && <p className="period-memo">{period.memo}</p>}
+                      </div>
+                      <button className="practice-button" onClick={() => editPeriod(period)}>수정</button>
+                      <button className="practice-button" onClick={() => deletePeriod(period)}>삭제</button>
                     </div>
                   ))}
                 </div>

@@ -12,6 +12,7 @@ export const BACKUP_KEYS = [
   "muselog-goal",
   "muselog-logs",
   "muselog-events",
+  "muselog-periods",
   "muselog-song-sort",
   "muselog-metronome",
   "muselog-routine",

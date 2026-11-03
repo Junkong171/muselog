@@ -42,10 +42,10 @@ export function normalizeSyncMeta(value) {
 
 const list = value => (Array.isArray(value) ? value : []);
 
-// 비어 있음: 연습 기록·일정·루틴이 하나도 없고, 연습곡이 없거나 처음 깔리는 예시 곡 3개 그대로
+// 비어 있음: 연습 기록·일정·연습 기간·루틴이 하나도 없고, 연습곡이 없거나 처음 깔리는 예시 곡 3개 그대로
 export function isEmptyData(data) {
   const d = data ?? {};
-  if (list(d["muselog-logs"]).length || list(d["muselog-events"]).length || list(d["muselog-routine"]).length) {
+  if (list(d["muselog-logs"]).length || list(d["muselog-events"]).length || list(d["muselog-periods"]).length || list(d["muselog-routine"]).length) {
     return false;
   }
   const songs = list(d["muselog-songs"]);
