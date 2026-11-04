@@ -42,7 +42,7 @@ function TripletIcon() {
   );
 }
 
-function Metronome({ settings, onChangeSettings, songs, onSaveLog }) {
+function Metronome({ settings, onChangeSettings, songs, onSaveLog, timerActive }) {
   const [running, setRunning] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(-1);
   const [elapsed, setElapsed] = useState(0); // 이번 연습 시간 (초)
@@ -145,7 +145,7 @@ function Metronome({ settings, onChangeSettings, songs, onSaveLog }) {
     schedule();
     schedulerRef.current = setInterval(schedule, SCHEDULE_EVERY_MS);
     frameRef.current = requestAnimationFrame(draw);
-    startedAtRef.current = performance.now();
+    startedAtRef.current = timerActive ? null : performance.now();
     setRunning(true);
   }
 
@@ -196,6 +196,17 @@ function Metronome({ settings, onChangeSettings, songs, onSaveLog }) {
     const bpm = calcTapBpm(tapsRef.current);
     if (bpm !== null) changeBpm(bpm);
   }
+
+  // 연습 타이머가 재는 동안은 시간을 쌓지 않는다. 같은 연습이 두 번 기록되지 않게 하기 위해서다 (소리는 그대로)
+  useEffect(() => {
+    if (!running) return;
+    if (!timerActive) {
+      startedAtRef.current ??= performance.now();
+    } else if (startedAtRef.current !== null) {
+      accumulatedRef.current += performance.now() - startedAtRef.current;
+      startedAtRef.current = null;
+    }
+  }, [running, timerActive]);
 
   const savableMinutes = elapsedToMinutes(elapsed);
 
@@ -321,17 +332,25 @@ function Metronome({ settings, onChangeSettings, songs, onSaveLog }) {
           <span>이번 연습 시간</span>
           <strong>{formatElapsed(elapsed)}</strong>
         </div>
-        <select value={songId} onChange={e => setSongId(e.target.value)} aria-label="연습곡">
-          <option value="">자유 연습</option>
-          {songs.map(song => (
-            <option key={song.id} value={song.id}>{song.title}</option>
-          ))}
-        </select>
-        <button className="primary-button" onClick={saveLog} disabled={savableMinutes < 1}>
-          연습 기록에 저장
-        </button>
+        {!timerActive && (
+          <>
+            <select value={songId} onChange={e => setSongId(e.target.value)} aria-label="연습곡">
+              <option value="">자유 연습</option>
+              {songs.map(song => (
+                <option key={song.id} value={song.id}>{song.title}</option>
+              ))}
+            </select>
+            <button className="primary-button" onClick={saveLog} disabled={savableMinutes < 1}>
+              연습 기록에 저장
+            </button>
+          </>
+        )}
       </div>
-      {savableMinutes < 1 && <p className="metro-hint">1분 이상 연습하면 저장할 수 있어요.</p>}
+      {timerActive ? (
+        <p className="metro-hint">타이머가 재는 중이에요. 연습 종료에서 저장해 주세요.</p>
+      ) : savableMinutes < 1 && (
+        <p className="metro-hint">1분 이상 연습하면 저장할 수 있어요.</p>
+      )}
     </section>
   );
 }
