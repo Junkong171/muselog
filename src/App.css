@@ -2558,3 +2558,15 @@ select:focus-visible {
   font-weight: 600;
   transform: translateX(-50%);
 }
+
+/* 수첩: 악기 선택과 재생 중인 코드 강조 */
+.insp-notebook-instrument {
+  grid-template-columns: minmax(0, 200px);
+}
+
+.insp-idea-chord.playing {
+  border-radius: 4px;
+  color: #3a3055;
+  background: var(--purple-light);
+  box-shadow: 0 0 0 2px var(--purple-light);
+}

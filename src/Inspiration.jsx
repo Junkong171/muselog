@@ -1,58 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   chordNames,
   chordNotes,
   drawKeywords,
   MAX_IDEA_LENGTH,
   normalizeIdeas,
-  noteFileUrl,
-  progressionNotes,
   progressionTokens,
 } from "./lib/inspiration";
 import { GENRES, INSTRUMENTS, KEYS, MOODS, PROGRESSIONS } from "./lib/inspirationData";
-
-const CHORD_SECONDS = 2;
-
-// 한 번 받은 음원은 다시 받지 않는다. 실패하면 다음에 다시 시도하도록 지운다
-const noteFiles = new Map();
-
-function fetchNoteFile(url) {
-  if (!noteFiles.has(url)) {
-    const request = fetch(url).then(response => {
-      if (!response.ok) throw new Error(`음원을 받지 못함: ${url}`);
-      return response.arrayBuffer();
-    });
-    request.catch(() => noteFiles.delete(url));
-    noteFiles.set(url, request);
-  }
-  return noteFiles.get(url);
-}
-
-// 필요한 음을 모두 받아 { 음 번호: 소리 } 로 돌려준다
-async function loadNotes(ctx, instrumentId, notes) {
-  const buffers = await Promise.all(notes.map(async midi => {
-    const file = await fetchNoteFile(noteFileUrl(instrumentId, midi));
-    return [midi, await ctx.decodeAudioData(file.slice(0))];
-  }));
-  return Object.fromEntries(buffers);
-}
-
-// 코드 하나를 예약한다. 맨 앞 음이 베이스라 함께 울리고, 음이 많으면 소리가 뭉치지 않게 줄인다.
-function scheduleChord(ctx, buffers, instrument, notes, time) {
-  const end = time + CHORD_SECONDS;
-  const level = instrument.gain * Math.min(1, 4 / notes.length);
-  notes.forEach((midi, i) => {
-    const source = ctx.createBufferSource();
-    const gain = ctx.createGain();
-    source.buffer = buffers[midi];
-    gain.gain.setValueAtTime(level, time);
-    gain.gain.setValueAtTime(level, end - 0.08);
-    gain.gain.linearRampToValueAtTime(0.0001, end);
-    source.connect(gain).connect(ctx.destination);
-    source.start(time + i * instrument.strum);
-    source.stop(end);
-  });
-}
+import { useChordPlayer } from "./useChordPlayer";
 
 // 글자가 없으면 undefined
 function buildIdea(fields) {
@@ -67,67 +23,21 @@ function Inspiration({ ideaCount, onChangeIdeas, onOpenNotebook }) {
   const [songKey, setSongKey] = useState(KEYS[0]);
   const [progressionIndex, setProgressionIndex] = useState(0);
   const [instrumentId, setInstrumentId] = useState(INSTRUMENTS[0].id);
-  const [loadingSound, setLoadingSound] = useState(false);
-  const [playingIndex, setPlayingIndex] = useState(null); // 지금 나는 코드 번호, null = 재생 안 함
-  const [audioError, setAudioError] = useState(null); // null / "unsupported" / "load"
+  const { loadingSound, playingIndex, audioError, play, stop: stopPlayback } = useChordPlayer();
   const [ideaText, setIdeaText] = useState("");
   const [withKeywords, setWithKeywords] = useState(true);
   const [withChords, setWithChords] = useState(true);
   const [ideaError, setIdeaError] = useState(false);
-  const playbackRef = useRef(null); // { ctx, timer }
 
   const progressions = PROGRESSIONS[genre][mood];
   const progression = progressions[progressionIndex];
   const chords = chordNames(progression, songKey);
 
-  function stopPlayback() {
-    const playback = playbackRef.current;
-    if (!playback) return;
-    playbackRef.current = null;
-    clearInterval(playback.timer);
-    playback.ctx.close();
-    setLoadingSound(false);
-    setPlayingIndex(null);
-  }
+  // 진행·조·악기가 바뀌면 소리를 멈춘다
+  useEffect(() => stopPlayback, [progression, songKey, instrumentId, stopPlayback]);
 
-  // 진행·조·악기가 바뀌거나 다른 탭으로 가면(화면에서 사라지면) 소리를 멈춘다
-  useEffect(() => stopPlayback, [progression, songKey, instrumentId]);
-
-  async function startPlayback() {
-    setAudioError(null);
-    let ctx = null;
-    try {
-      ctx = new (window.AudioContext || window.webkitAudioContext)();
-      ctx.resume().catch(() => {});
-    } catch {
-      ctx?.close();
-      setAudioError("unsupported");
-      return;
-    }
-    const playback = { ctx, timer: null };
-    playbackRef.current = playback;
-    setLoadingSound(true);
-    try {
-      const instrument = INSTRUMENTS.find(item => item.id === instrumentId);
-      const buffers = await loadNotes(ctx, instrumentId, progressionNotes(progression, songKey));
-      if (playbackRef.current !== playback) return; // 받는 동안 멈췄거나 선택이 바뀜
-      setLoadingSound(false);
-      const start = ctx.currentTime + 0.05;
-      progressionTokens(progression).forEach((token, i) => {
-        scheduleChord(ctx, buffers, instrument, chordNotes(token, songKey), start + i * CHORD_SECONDS);
-      });
-      setPlayingIndex(0);
-      // 소리는 AudioContext가 정확히 내고, 화면 강조만 시계를 보고 따라간다
-      playback.timer = setInterval(() => {
-        const index = Math.floor((ctx.currentTime - start) / CHORD_SECONDS);
-        if (index >= chords.length) stopPlayback();
-        else setPlayingIndex(Math.max(0, index));
-      }, 50);
-    } catch {
-      if (playbackRef.current !== playback) return;
-      stopPlayback();
-      setAudioError("load");
-    }
+  function startPlayback() {
+    play(instrumentId, progressionTokens(progression).map(token => chordNotes(token, songKey)));
   }
 
   function changeSelection(setter, value) {
@@ -235,8 +145,8 @@ function Inspiration({ ideaCount, onChangeIdeas, onOpenNotebook }) {
             다른 진행
           </button>
         </div>
-        {audioError === "unsupported" && <p className="time-error insp-error">이 브라우저에서는 소리를 낼 수 없어요.</p>}
-        {audioError === "load" && <p className="time-error insp-error">소리를 불러오지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.</p>}
+        {audioError?.type === "unsupported" && <p className="time-error insp-error">이 브라우저에서는 소리를 낼 수 없어요.</p>}
+        {audioError?.type === "load" && <p className="time-error insp-error">소리를 불러오지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.</p>}
         <p className="insp-credit">
           소리: FluidR3 GM (Frank Wen), <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>,{" "}
           <a href="https://github.com/gleitz/midi-js-soundfonts" target="_blank" rel="noreferrer">midi-js-soundfonts</a>에서 가져옴

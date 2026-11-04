@@ -30,7 +30,8 @@ src/
   Tuner.jsx      작업실 탭의 튜너 (마이크로 음 높이 재기, 저장하는 값 없음)
   PracticeTimer.jsx  모든 탭 위쪽의 연습 타이머 (시작·휴식·종료 후 연습 기록에 저장)
   Inspiration.jsx  영감 탭 (키워드 뽑기, 코드 진행과 들어보기, 아이디어 쓰기)
-  Notebook.jsx   수첩 탭 (저장한 아이디어 보기·수정·삭제)
+  Notebook.jsx   수첩 탭 (저장한 아이디어 보기·수정·삭제, 코드 다시 듣기)
+  useChordPlayer.js  영감·수첩 탭이 함께 쓰는 코드 재생 (음원 불러오기, Web Audio API)
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
