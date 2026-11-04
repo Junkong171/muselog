@@ -1,19 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   formatIdeaChords,
   formatIdeaDate,
+  ideaChordNotes,
   MAX_IDEA_LENGTH,
   normalizeIdeas,
   sortIdeas,
 } from "./lib/inspiration";
+import { INSTRUMENTS } from "./lib/inspirationData";
+import { useChordPlayer } from "./useChordPlayer";
 
 // 수첩 탭: 영감 탭에서 저장한 아이디어를 다시 보고 고치는 곳
 function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState("");
   const [editError, setEditError] = useState(false);
+  const [instrumentId, setInstrumentId] = useState(INSTRUMENTS[0].id);
+  const player = useChordPlayer();
+  const stopPlayer = player.stop;
+
+  // 악기를 바꾸면 소리를 멈춘다
+  useEffect(() => stopPlayer, [instrumentId, stopPlayer]);
+
+  function stopIfPlaying(idea) {
+    if (player.activeId === idea.id) player.stop();
+  }
 
   function startEdit(idea) {
+    stopIfPlaying(idea);
     setEditingId(idea.id);
     setEditingText(idea.text);
     setEditError(false);
@@ -31,6 +45,7 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
 
   function deleteIdea(idea) {
     if (!window.confirm("이 아이디어를 삭제할까요?")) return;
+    stopIfPlaying(idea);
     onChangeIdeas(current => current.filter(item => item.id !== idea.id));
     if (editingId === idea.id) setEditingId(null);
   }
@@ -50,6 +65,16 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
           <h3>아이디어</h3>
           <span>{ideas.length}개</span>
         </div>
+        {ideas.length > 0 && (
+          <div className="insp-selects insp-notebook-instrument">
+            <label>
+              악기
+              <select value={instrumentId} onChange={e => setInstrumentId(e.target.value)}>
+                {INSTRUMENTS.map(option => <option key={option.id} value={option.id}>{option.name}</option>)}
+              </select>
+            </label>
+          </div>
+        )}
         {ideas.length === 0 ? (
           <div className="insp-notebook-empty">
             <p className="chart-empty">아직 적어 둔 아이디어가 없어요.</p>
@@ -57,7 +82,11 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
           </div>
         ) : (
           <div className="event-list">
-            {sortIdeas(ideas).map(idea => (
+            {sortIdeas(ideas).map(idea => {
+              const chordList = ideaChordNotes(idea.chords);
+              const active = player.activeId === idea.id;
+              const audioError = player.audioError?.id === idea.id ? player.audioError.type : null;
+              return (
               <div className="insp-idea" key={idea.id}>
                 {editingId === idea.id ? (
                   <>
@@ -77,7 +106,21 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
                   <div className="insp-idea-meta">
                     {idea.createdAt && <span>{formatIdeaDate(idea.createdAt)}</span>}
                     {idea.keywords.length > 0 && <span>{idea.keywords.join(" · ")}</span>}
-                    {idea.chords.length > 0 && <span>{formatIdeaChords(idea)}</span>}
+                    {idea.chords.length > 0 && (
+                      active && player.playingIndex !== null ? (
+                        <span>
+                          {idea.key && `${idea.key}조 · `}
+                          {idea.chords.map((chord, i) => (
+                            <span key={i}>
+                              {i > 0 && " "}
+                              <span className={player.playingIndex === i ? "insp-idea-chord playing" : "insp-idea-chord"}>{chord}</span>
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span>{formatIdeaChords(idea)}</span>
+                      )
+                    )}
                   </div>
                   {editingId === idea.id ? (
                     <>
@@ -86,13 +129,24 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
                     </>
                   ) : (
                     <>
+                      {chordList && (
+                        <button
+                          className="practice-button"
+                          onClick={() => (active ? player.stop() : player.play(instrumentId, chordList, idea.id))}
+                        >
+                          {!active ? "들어보기" : player.loadingSound ? "불러오는 중…" : "정지"}
+                        </button>
+                      )}
                       <button className="practice-button" onClick={() => startEdit(idea)}>수정</button>
                       <button className="practice-button" onClick={() => deleteIdea(idea)}>삭제</button>
                     </>
                   )}
                 </div>
+                {audioError === "unsupported" && <p className="time-error insp-error">이 브라우저에서는 소리를 낼 수 없어요.</p>}
+                {audioError === "load" && <p className="time-error insp-error">소리를 불러오지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.</p>}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

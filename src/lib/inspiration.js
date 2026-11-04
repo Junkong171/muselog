@@ -96,9 +96,19 @@ export function chordNotes(token, key) {
   return [48 + bassPitch, ...CHORD_INTERVALS[quality].map(interval => root + interval)];
 }
 
-// 진행 전체에 필요한 음 (겹침 없이)
-export function progressionNotes(progression, key) {
-  return [...new Set(progressionTokens(progression).flatMap(token => chordNotes(token, key)))];
+// 저장된 코드 이름에서 소리 낼 음을 읽는다. ("G/B") → chordNotes와 같은 모양, 읽을 수 없으면 null
+function chordNameNotes(name) {
+  const match = /^([A-G][#b]?)([^/]*)(?:\/([A-G][#b]?))?$/.exec(name);
+  if (!match || !Object.hasOwn(CHORD_INTERVALS, match[2])) return null;
+  const pitch = pitchOf(match[1]);
+  const bassPitch = match[3] ? pitchOf(match[3]) : pitch;
+  return [48 + bassPitch, ...CHORD_INTERVALS[match[2]].map(interval => 60 + pitch + interval)];
+}
+
+// 아이디어의 코드 이름 배열 → 코드마다 음 배열. 코드가 없거나 하나라도 읽을 수 없으면 null
+export function ideaChordNotes(chords) {
+  const notes = chords.map(chordNameNotes);
+  return notes.length && notes.every(Boolean) ? notes : null;
 }
 
 // (악기, 60) → "/sounds/악기/C4.mp3" (음원 파일 이름은 반음을 b로 쓴다)

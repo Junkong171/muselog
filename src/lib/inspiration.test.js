@@ -7,10 +7,10 @@ import {
   drawKeywords,
   formatIdeaChords,
   formatIdeaDate,
+  ideaChordNotes,
   MAX_IDEA_LENGTH,
   normalizeIdeas,
   noteFileUrl,
-  progressionNotes,
   progressionTokens,
   sortIdeas,
 } from "./inspiration";
@@ -115,8 +115,31 @@ describe("chordNotes (소리 낼 음)", () => {
     expect(chordNotes("5/7", "C")[0]).toBe(59); // G/B의 B
   });
 
-  it("진행 전체의 음은 겹치지 않는다", () => {
-    expect(progressionNotes("1 1", "C")).toEqual([48, 60, 64, 67]);
+});
+
+describe("ideaChordNotes (저장된 코드 이름 읽기)", () => {
+  it("모든 진행을 12개 조로 낸 코드 이름이 영감 탭의 음과 같다", () => {
+    GENRES.forEach(genre => MOODS.forEach(mood => PROGRESSIONS[genre][mood].forEach(progression => {
+      KEYS.forEach(key => {
+        const expected = progressionTokens(progression).map(token => chordNotes(token, key));
+        expect(ideaChordNotes(chordNames(progression, key))).toEqual(expected);
+      });
+    })));
+  });
+
+  it("베이스, 7화음, 샵·플랫", () => {
+    expect(ideaChordNotes(["G/B"])).toEqual([chordNotes("5/7", "C")]);
+    expect(ideaChordNotes(["Bbmaj7"])).toEqual([chordNotes("1maj7", "Bb")]);
+    expect(ideaChordNotes(["F#m7"])).toEqual([chordNotes("1m7", "F#")]);
+    expect(ideaChordNotes(["E#"])).toEqual([chordNotes("7", "F#")]);
+  });
+
+  it("코드가 없거나 하나라도 읽을 수 없으면 null", () => {
+    expect(ideaChordNotes([])).toBeNull();
+    expect(ideaChordNotes(["C", "H"])).toBeNull();
+    ["Cxyz", "C/H", "toString", "CtoString", "Cconstructor", "", "c"].forEach(name => {
+      expect(ideaChordNotes([name])).toBeNull();
+    });
   });
 });
 
@@ -133,7 +156,7 @@ describe("악기 음원", () => {
     INSTRUMENTS.forEach(instrument => {
       GENRES.forEach(genre => MOODS.forEach(mood => PROGRESSIONS[genre][mood].forEach(progression => {
         KEYS.forEach(key => {
-          progressionNotes(progression, key).forEach(midi => {
+          progressionTokens(progression).flatMap(token => chordNotes(token, key)).forEach(midi => {
             const url = noteFileUrl(instrument.id, midi);
             if (!existsSync(`public${url}`)) missing.add(url);
           });
