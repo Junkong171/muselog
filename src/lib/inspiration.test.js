@@ -5,10 +5,12 @@ import {
   chordNames,
   chordNotes,
   drawKeywords,
+  formatDuration,
   formatIdeaChords,
   formatIdeaDate,
   ideaChordNotes,
   MAX_IDEA_LENGTH,
+  MAX_RECORD_SECONDS,
   normalizeIdeas,
   noteFileUrl,
   progressionTokens,
@@ -201,8 +203,27 @@ describe("normalizeIdeas (저장된 값 정리)", () => {
   });
 
   it("올바른 아이디어는 그대로 읽는다", () => {
-    const saved = { id: 1, createdAt: "2026-11-03T01:00:00.000Z", text: "새벽의 편의점", keywords: ["새벽"], key: "C", chords: ["C", "G"] };
+    const saved = { id: 1, createdAt: "2026-11-03T01:00:00.000Z", text: "새벽의 편의점", keywords: ["새벽"], key: "C", chords: ["C", "G"], audioSeconds: 7 };
     expect(normalizeIdeas([saved])).toEqual([saved]);
+  });
+
+  it("예전 아이디어(녹음 길이 없음)는 녹음 없음(0)으로 읽는다", () => {
+    const old = { id: 1, createdAt: "2026-11-03T01:00:00.000Z", text: "새벽", keywords: [], key: "", chords: [] };
+    expect(normalizeIdeas([old])).toEqual([{ ...old, audioSeconds: 0 }]);
+  });
+
+  it("녹음이 있으면 글자가 없어도 남기고, 녹음 길이가 깨지면 0", () => {
+    expect(normalizeIdeas([{ id: 2, audioSeconds: 7 }])).toMatchObject([{ id: 2, text: "", audioSeconds: 7 }]);
+    expect(normalizeIdeas([{ id: 3, text: "", audioSeconds: 0 }, { id: 4, audioSeconds: "7" }, { id: 5, audioSeconds: -1 }])).toEqual([]);
+    expect(normalizeIdeas([{ text: "글", audioSeconds: NaN }])[0].audioSeconds).toBe(0);
+    expect(normalizeIdeas([{ text: "글", audioSeconds: 0.3 }])[0].audioSeconds).toBe(1);
+    expect(normalizeIdeas([{ text: "글", audioSeconds: 999 }])[0].audioSeconds).toBe(MAX_RECORD_SECONDS);
+  });
+
+  it("녹음 길이 표시", () => {
+    expect(formatDuration(0)).toBe("0:00");
+    expect(formatDuration(7)).toBe("0:07");
+    expect(formatDuration(125.9)).toBe("2:05");
   });
 
   it("글자가 없으면 버린다", () => {

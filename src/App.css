@@ -1933,6 +1933,45 @@ select:focus-visible {
   margin-left: auto;
 }
 
+.insp-record {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.insp-record button {
+  margin-left: 0;
+}
+
+.insp-record-time {
+  color: #3a3055;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.insp-record-time.recording {
+  color: #d0485f;
+}
+
+.insp-record-hint {
+  color: var(--muted);
+  font-size: 12px;
+  word-break: keep-all;
+}
+
+.insp-idea-voice-only {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.insp-voice-missing {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .insp-form textarea,
 .insp-idea textarea {
   box-sizing: border-box;

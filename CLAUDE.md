@@ -30,7 +30,8 @@ src/
   Tuner.jsx      작업실 탭의 튜너 (마이크로 음 높이 재기, 저장하는 값 없음)
   PracticeTimer.jsx  모든 탭 위쪽의 연습 타이머 (시작·휴식·종료 후 연습 기록에 저장)
   Inspiration.jsx  영감 탭 (키워드 뽑기, 코드 진행과 들어보기, 아이디어 쓰기)
-  Notebook.jsx   수첩 탭 (저장한 아이디어 보기·수정·삭제, 코드 다시 듣기)
+  Notebook.jsx   수첩 탭 (저장한 아이디어 보기·수정·삭제, 코드·녹음 다시 듣기)
+  voiceMemo.js   아이디어 음성 메모 (마이크 녹음·재생, 녹음 파일은 IndexedDB `muselog-audio`의 `memos`에 아이디어 id로 저장. 이 기기 전용이라 백업·동기화에 넣지 않는다)
   useChordPlayer.js  영감·수첩 탭이 함께 쓰는 코드 재생 (음원 불러오기, Web Audio API)
   App.css     화면 스타일
   index.css   기본 스타일
@@ -52,7 +53,7 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-logs` | 연습 기록 배열 `[{ id, date(ISO), minutes, songTitle, note }]` |
 | `muselog-events` | 캘린더 일정 배열 `[{ id, date("YYYY-MM-DD"), time("HH:MM" 또는 "" = 종일), title, memo }]` |
 | `muselog-periods` | 연습 기간 메모 배열 `[{ id, start("YYYY-MM-DD"), end("YYYY-MM-DD"), title(1~40자), memo(0~200자) }]` (깨진 항목은 버리고, start > end면 바꿔서 읽음) |
-| `muselog-ideas` | 아이디어 메모 배열 `[{ id, createdAt(ISO), text(1~500자), keywords: [문자열], key(조, 코드 없으면 ""), chords: [코드 이름] }]` (글자 없는 항목은 버리고, 빠진 항목은 기본값으로 읽음) |
+| `muselog-ideas` | 아이디어 메모 배열 `[{ id, createdAt(ISO), text(0~500자), keywords: [문자열], key(조, 코드 없으면 ""), chords: [코드 이름], audioSeconds(녹음 길이 초, 0 = 녹음 없음) }]` (글자도 녹음도 없는 항목은 버리고, 빠진 항목은 기본값으로 읽음. 녹음 파일 자체는 IndexedDB에 있음) |
 | `muselog-song-sort` | 연습곡 정렬 기준 (문자열 `"added"` / `"title"` / `"progress"`, 없거나 깨지면 `"added"`) |
 | `muselog-metronome` | 메트로놈 설정 `{ bpm(10~300), beats(2/3/4/6), accents(강조할 박 번호 배열, 1~6), subdivision(1~4, 리듬: ♩ ♫ 셋잇단음표 ♬) }` (없거나 깨진 항목은 기본값 120 / 4 / [1] / 1, 예전 `accent: true/false`는 `[1]` / `[]`로 읽음) |
 | `muselog-routine` | 고정 연습 루틴 목록 `[{ id, title(1~40자) }]` (배열 순서 = 보이는 순서, 깨진 항목은 버림) |

@@ -3,14 +3,17 @@ import {
   chordNames,
   chordNotes,
   drawKeywords,
+  formatDuration,
   MAX_IDEA_LENGTH,
+  MAX_RECORD_SECONDS,
   normalizeIdeas,
   progressionTokens,
 } from "./lib/inspiration";
 import { GENRES, INSTRUMENTS, KEYS, MOODS, PROGRESSIONS } from "./lib/inspirationData";
 import { useChordPlayer } from "./useChordPlayer";
+import { saveAudio, useVoicePlayer, useVoiceRecorder } from "./voiceMemo";
 
-// 글자가 없으면 undefined
+// 글자도 녹음도 없으면 undefined
 function buildIdea(fields) {
   return normalizeIdeas([{ id: Date.now(), createdAt: new Date().toISOString(), ...fields }])[0];
 }
@@ -28,6 +31,12 @@ function Inspiration({ ideaCount, onChangeIdeas, onOpenNotebook }) {
   const [withKeywords, setWithKeywords] = useState(true);
   const [withChords, setWithChords] = useState(true);
   const [ideaError, setIdeaError] = useState(false);
+  const [audioSaveError, setAudioSaveError] = useState(false);
+  const [savingIdea, setSavingIdea] = useState(false);
+  const recorder = useVoiceRecorder();
+  const voicePlayer = useVoicePlayer();
+  const stopVoice = voicePlayer.stop;
+  const recording = recorder.status === "starting" || recorder.status === "recording";
 
   const progressions = PROGRESSIONS[genre][mood];
   const progression = progressions[progressionIndex];
@@ -37,6 +46,7 @@ function Inspiration({ ideaCount, onChangeIdeas, onOpenNotebook }) {
   useEffect(() => stopPlayback, [progression, songKey, instrumentId, stopPlayback]);
 
   function startPlayback() {
+    stopVoice();
     play(instrumentId, progressionTokens(progression).map(token => chordNotes(token, songKey)));
   }
 
@@ -46,21 +56,51 @@ function Inspiration({ ideaCount, onChangeIdeas, onOpenNotebook }) {
     setProgressionIndex(0);
   }
 
-  function saveIdea(e) {
+  function startRecording() {
+    stopPlayback();
+    stopVoice();
+    setAudioSaveError(false);
+    setIdeaError(false);
+    recorder.start();
+  }
+
+  function clearRecording() {
+    stopVoice();
+    recorder.clear();
+  }
+
+  async function saveIdea(e) {
     e.preventDefault();
+    if (recording || savingIdea) return;
+    const audio = recorder.status === "done" ? recorder.blob : null;
     const idea = buildIdea({
       text: ideaText,
       keywords: withKeywords ? keywords : [],
       key: withChords ? songKey : "",
       chords: withChords ? chords : [],
+      audioSeconds: audio ? recorder.seconds : 0,
     });
     if (!idea) {
       setIdeaError(true);
       return;
     }
+    if (audio) {
+      setSavingIdea(true);
+      try {
+        await saveAudio(idea.id, audio);
+      } catch {
+        setAudioSaveError(true);
+        return;
+      } finally {
+        setSavingIdea(false);
+      }
+      stopVoice();
+      recorder.clear();
+    }
     onChangeIdeas(current => [...current, idea]);
     setIdeaText("");
     setIdeaError(false);
+    setAudioSaveError(false);
   }
 
   return (
@@ -167,6 +207,42 @@ function Inspiration({ ideaCount, onChangeIdeas, onOpenNotebook }) {
             maxLength={MAX_IDEA_LENGTH}
             rows={3}
           />
+          <div className="insp-record">
+            {recording ? (
+              <>
+                <span className="insp-record-time recording">● 녹음 중 {formatDuration(recorder.seconds)} / {formatDuration(MAX_RECORD_SECONDS)}</span>
+                <button type="button" className="primary-button" onClick={recorder.stop} disabled={recorder.status === "starting"}>
+                  녹음 끝
+                </button>
+              </>
+            ) : recorder.status === "done" ? (
+              <>
+                <span className="insp-record-time">🎤 녹음 {formatDuration(recorder.seconds)}</span>
+                <button
+                  type="button"
+                  className="practice-button"
+                  onClick={() => {
+                    if (voicePlayer.playingId) {
+                      stopVoice();
+                    } else {
+                      stopPlayback();
+                      voicePlayer.play("preview", recorder.blob);
+                    }
+                  }}
+                >
+                  {voicePlayer.playingId ? "정지" : "들어보기"}
+                </button>
+                <button type="button" className="practice-button" onClick={clearRecording}>지우기</button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="practice-button" onClick={startRecording}>🎤 녹음</button>
+                <span className="insp-record-hint">흥얼거린 멜로디를 최대 2분까지 녹음해 둬</span>
+              </>
+            )}
+          </div>
+          {recorder.error && <p className="time-error insp-error">{recorder.error}</p>}
+          {voicePlayer.error && <p className="time-error insp-error">{voicePlayer.error.message}</p>}
           <div className="insp-form-row">
             <label>
               <input type="checkbox" checked={withKeywords} onChange={e => setWithKeywords(e.target.checked)} />
@@ -176,10 +252,11 @@ function Inspiration({ ideaCount, onChangeIdeas, onOpenNotebook }) {
               <input type="checkbox" checked={withChords} onChange={e => setWithChords(e.target.checked)} />
               코드 함께 저장
             </label>
-            <button className="primary-button" type="submit">아이디어 저장</button>
+            <button className="primary-button" type="submit" disabled={recording || savingIdea}>아이디어 저장</button>
           </div>
         </form>
         {ideaError && <p className="time-error insp-error">메모를 적어 주세요.</p>}
+        {audioSaveError && <p className="time-error insp-error">녹음을 저장하지 못했어요. 저장 공간이 부족하지 않은지 확인하고 다시 눌러 주세요.</p>}
         <div className="insp-notebook-link">
           <span>저장한 아이디어 {ideaCount}개</span>
           <button className="cal-today-button" onClick={onOpenNotebook}>수첩 열기</button>
