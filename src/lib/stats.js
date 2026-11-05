@@ -29,6 +29,13 @@ export function calcStreak(minutesByDay, today) {
   return streak;
 }
 
+// 대시보드 배너의 연속 연습 문구. streak은 calcStreak의 결과다
+export function streakMessage(streak, practicedToday) {
+  if (practicedToday) return `${streak}일째 연습 중이에요. 오늘 연습 완료!`;
+  if (streak > 0) return `${streak}일째 이어 가는 중이에요. 오늘 연습하면 ${streak + 1}일째!`;
+  return "오늘 연습하면 1일째가 시작돼요.";
+}
+
 export function getWeekDays(minutesByDay, today) {
   const todayKey = dateKey(today);
   const weekStart = new Date(today);

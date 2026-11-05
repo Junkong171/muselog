@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import "./App.css";
-import { dateKey, sumMinutesByDay, calcStreak, getWeekDays, rankSongs } from "./lib/stats";
+import { dateKey, sumMinutesByDay, calcStreak, streakMessage, getWeekDays, rankSongs } from "./lib/stats";
 import {
   getMonthGrid,
   calcDday,
@@ -925,6 +925,7 @@ function App() {
               <p className="welcome-sub">
                 조금씩 연습하고, 어제보다 나아지는 나를 기록해 보세요.
               </p>
+              <p className="welcome-streak">{streakMessage(streak, todayMinutes > 0)}</p>
             </div>
             <div className="music-art" aria-hidden="true">
               <span className="art-circle circle-one" />
