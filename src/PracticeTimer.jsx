@@ -25,7 +25,7 @@ function loadTimer() {
 }
 
 // 모든 탭 위쪽의 연습 타이머. 1초마다 바뀌므로 App 전체가 다시 그려지지 않게 상태를 여기에 둔다
-function PracticeTimer({ songs, onSave }) {
+function PracticeTimer({ songs, onSave, onActiveChange }) {
   const [timer, setTimer] = useState(loadTimer);
   const [now, setNow] = useState(currentTime);
   const [ended, setEnded] = useState(null); // "연습 종료"를 누른 순간의 시간, null = 저장 칸 닫힘
@@ -39,6 +39,10 @@ function PracticeTimer({ songs, onSave }) {
     if (timer) localStorage.setItem(STORAGE_KEY, JSON.stringify(timer));
     else localStorage.removeItem(STORAGE_KEY);
   }, [timer]);
+
+  useEffect(() => {
+    onActiveChange(timer !== null);
+  }, [timer, onActiveChange]);
 
   useEffect(() => {
     if (!timer) return undefined;

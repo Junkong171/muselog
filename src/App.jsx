@@ -66,6 +66,7 @@ function App() {
   const [minutes, setMinutes] = useState(() => loadData("muselog-minutes", 0));
   const [goal, setGoal] = useState(() => loadData("muselog-goal", 60));
   const [logs, setLogs] = useState(() => loadData("muselog-logs", []));
+  const [timerActive, setTimerActive] = useState(false); // 연습 타이머가 재는 중인지 (메트로놈 시간 겹침 막기)
   const [newTitle, setNewTitle] = useState("");
   const [newArtist, setNewArtist] = useState("");
   const [newPart, setNewPart] = useState(DEFAULT_PART);
@@ -827,7 +828,7 @@ function App() {
           </div>
         </header>
 
-        <PracticeTimer songs={songs} onSave={recordPractice} />
+        <PracticeTimer songs={songs} onSave={recordPractice} onActiveChange={setTimerActive} />
 
         {loginError && (
           <p className="login-error" role="alert">
@@ -1383,6 +1384,7 @@ function App() {
               onChangeSettings={setMetronome}
               songs={songs}
               onSaveLog={recordPractice}
+              timerActive={timerActive}
             />
             <Tuner />
           </>
