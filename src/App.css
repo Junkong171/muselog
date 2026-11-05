@@ -577,6 +577,21 @@ select:focus-visible {
   line-height: 1.8;
 }
 
+.welcome-streak {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  margin: 12px 0 0;
+  padding: 6px 12px;
+  word-break: keep-all;
+  border-radius: 10px;
+  color: #3a3055;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .music-art {
   position: relative;
   display: grid;
@@ -1185,6 +1200,11 @@ select:focus-visible {
 
   .welcome-sub {
     max-width: 290px;
+    font-size: 12px;
+  }
+
+  .welcome-streak {
+    max-width: 100%;
     font-size: 12px;
   }
 

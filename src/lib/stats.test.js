@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcStreak, dateKey, getWeekDays, rankSongs, sumMinutesByDay } from "./stats";
+import { calcStreak, dateKey, getWeekDays, rankSongs, streakMessage, sumMinutesByDay } from "./stats";
 
 // 로컬 날짜로 만든 기록. 저장 형식과 같게 date는 ISO 문자열로 넣는다.
 function log(year, month, day, minutes, songTitle = "") {
@@ -38,6 +38,29 @@ describe("dateKey / sumMinutesByDay", () => {
   it("같은 날 기록은 합쳐진다", () => {
     const byDay = sumMinutesByDay([log(2026, 10, 23, 15), log(2026, 10, 23, 30), log(2026, 10, 22, 5)]);
     expect(byDay).toEqual({ "2026-10-23": 45, "2026-10-22": 5 });
+  });
+});
+
+describe("streakMessage", () => {
+  it("오늘 연습했으면 완료 문구를 보여 준다", () => {
+    expect(streakMessage(5, true)).toBe("5일째 연습 중이에요. 오늘 연습 완료!");
+  });
+
+  it("오늘은 아직이고 어제까지 이어졌으면 다음 날짜를 보여 준다", () => {
+    expect(streakMessage(5, false)).toBe("5일째 이어 가는 중이에요. 오늘 연습하면 6일째!");
+  });
+
+  it("연속 기록이 없으면 시작 문구를 보여 준다", () => {
+    expect(streakMessage(0, false)).toBe("오늘 연습하면 1일째가 시작돼요.");
+  });
+
+  it("calcStreak 결과와 이어서 쓰면 상황에 맞는 문구가 나온다", () => {
+    const today = local(2026, 10, 23);
+    const yesterdayOnly = sumMinutesByDay([log(2026, 10, 22, 15)]);
+    expect(streakMessage(calcStreak(yesterdayOnly, today), false)).toBe("1일째 이어 가는 중이에요. 오늘 연습하면 2일째!");
+    const withToday = sumMinutesByDay([log(2026, 10, 23, 1), log(2026, 10, 22, 15)]);
+    expect(streakMessage(calcStreak(withToday, today), true)).toBe("2일째 연습 중이에요. 오늘 연습 완료!");
+    expect(streakMessage(calcStreak({}, today), false)).toBe("오늘 연습하면 1일째가 시작돼요.");
   });
 });
 
