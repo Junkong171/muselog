@@ -194,6 +194,12 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
             })}
           </div>
         )}
+        {ideas.length > 0 && (
+          <p className="insp-credit">
+            소리: FluidR3 GM (Frank Wen), <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>,{" "}
+            <a href="https://github.com/gleitz/midi-js-soundfonts" target="_blank" rel="noreferrer">midi-js-soundfonts</a>에서 가져옴
+          </p>
+        )}
       </section>
     </>
   );

@@ -1580,6 +1580,8 @@ function App() {
           <span>
             MUSELOG © 2026 ·{" "}
             <a className="footer-link" href="/privacy.html" target="_blank" rel="noreferrer">개인정보처리방침</a>
+            {" · "}
+            <a className="footer-link" href="/licenses.html" target="_blank" rel="noreferrer">출처·라이선스</a>
           </span>
           <span>MADE FOR THE LOVE OF MUSIC ♡</span>
         </footer>
