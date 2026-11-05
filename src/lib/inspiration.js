@@ -3,6 +3,7 @@
 import { CONCRETE_WORDS, EMOTION_WORDS } from "./inspirationData";
 
 export const MAX_IDEA_LENGTH = 500;
+export const MAX_RECORD_SECONDS = 120; // 음성 메모 최대 길이 (2분)
 
 // ---------- 키워드 ----------
 const KEYWORD_SLOTS = [CONCRETE_WORDS, CONCRETE_WORDS, EMOTION_WORDS];
@@ -119,13 +120,22 @@ export function noteFileUrl(instrumentId, midi) {
 // ---------- 아이디어 메모 ----------
 const textList = value => (Array.isArray(value) ? value.filter(item => typeof item === "string" && item) : []);
 
-// 저장된 값이 깨져 있어도 앱이 멈추지 않도록 글자가 있는 아이디어만 남기고, 빠진 항목은 기본값으로 읽는다
+// 녹음 길이(초). 없거나 깨진 값이면 0 (= 녹음 없음)
+function readAudioSeconds(value) {
+  return Number.isFinite(value) && value > 0 ? Math.min(Math.round(value) || 1, MAX_RECORD_SECONDS) : 0;
+}
+
+// 저장된 값이 깨져 있어도 앱이 멈추지 않도록 글자나 녹음이 있는 아이디어만 남기고, 빠진 항목은 기본값으로 읽는다
 export function normalizeIdeas(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
-    .filter(idea => idea && typeof idea.text === "string" && idea.text.trim())
+    .filter(idea => {
+      if (!idea) return false;
+      const hasText = typeof idea.text === "string" && idea.text.trim();
+      return hasText || readAudioSeconds(idea.audioSeconds) > 0;
+    })
     .map((idea, index) => {
-      const text = idea.text.trim().slice(0, MAX_IDEA_LENGTH);
+      const text = typeof idea.text === "string" ? idea.text.trim().slice(0, MAX_IDEA_LENGTH) : "";
       const createdAt = typeof idea.createdAt === "string" && !Number.isNaN(Date.parse(idea.createdAt)) ? idea.createdAt : "";
       const chords = textList(idea.chords);
       return {
@@ -135,8 +145,15 @@ export function normalizeIdeas(raw) {
         keywords: textList(idea.keywords),
         key: chords.length && typeof idea.key === "string" ? idea.key : "",
         chords,
+        audioSeconds: readAudioSeconds(idea.audioSeconds),
       };
     });
+}
+
+// 7 → "0:07", 125 → "2:05"
+export function formatDuration(seconds) {
+  const total = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
 // 최신순. 시각이 같으면 나중에 저장한 것이 위로, 시각을 모르면 맨 아래로

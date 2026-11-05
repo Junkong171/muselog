@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  formatDuration,
   formatIdeaChords,
   formatIdeaDate,
   ideaChordNotes,
@@ -9,9 +10,25 @@ import {
 } from "./lib/inspiration";
 import { INSTRUMENTS } from "./lib/inspirationData";
 import { useChordPlayer } from "./useChordPlayer";
+import { deleteAudio, loadAudio, savedAudioIds, useVoicePlayer } from "./voiceMemo";
 
 // 수첩 탭: 영감 탭에서 저장한 아이디어를 다시 보고 고치는 곳
 function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
+  const voice = useVoicePlayer();
+  const stopVoice = voice.stop;
+  // 이 기기에 녹음 파일이 있는 아이디어 id 목록 (null = 아직 확인 중)
+  const [audioIds, setAudioIds] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    savedAudioIds()
+      .then(ids => !cancelled && setAudioIds(new Set(ids)))
+      .catch(() => !cancelled && setAudioIds(new Set()));
+    return () => {
+      cancelled = true;
+    };
+  }, [ideas]);
+
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState("");
   const [editError, setEditError] = useState(false);
@@ -24,6 +41,16 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
 
   function stopIfPlaying(idea) {
     if (player.activeId === idea.id) player.stop();
+    if (voice.playingId === idea.id) stopVoice();
+  }
+
+  function toggleVoice(idea) {
+    if (voice.playingId === idea.id) {
+      stopVoice();
+      return;
+    }
+    player.stop();
+    voice.play(idea.id, () => loadAudio(idea.id));
   }
 
   function startEdit(idea) {
@@ -47,6 +74,7 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
     if (!window.confirm("이 아이디어를 삭제할까요?")) return;
     stopIfPlaying(idea);
     onChangeIdeas(current => current.filter(item => item.id !== idea.id));
+    if (idea.audioSeconds > 0) deleteAudio(idea.id).catch(() => {});
     if (editingId === idea.id) setEditingId(null);
   }
 
@@ -86,6 +114,8 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
               const chordList = ideaChordNotes(idea.chords);
               const active = player.activeId === idea.id;
               const audioError = player.audioError?.id === idea.id ? player.audioError.type : null;
+              const hasVoice = idea.audioSeconds > 0 && audioIds?.has(idea.id);
+              const voiceMissing = idea.audioSeconds > 0 && audioIds && !audioIds.has(idea.id);
               return (
               <div className="insp-idea" key={idea.id}>
                 {editingId === idea.id ? (
@@ -100,11 +130,12 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
                     {editError && <p className="time-error insp-error">메모를 적어 주세요.</p>}
                   </>
                 ) : (
-                  <p className="insp-idea-text">{idea.text}</p>
+                  <p className="insp-idea-text">{idea.text || <span className="insp-idea-voice-only">음성 메모</span>}</p>
                 )}
                 <div className="insp-idea-foot">
                   <div className="insp-idea-meta">
                     {idea.createdAt && <span>{formatIdeaDate(idea.createdAt)}</span>}
+                    {idea.audioSeconds > 0 && <span>🎤 {formatDuration(idea.audioSeconds)}</span>}
                     {idea.keywords.length > 0 && <span>{idea.keywords.join(" · ")}</span>}
                     {idea.chords.length > 0 && (
                       active && player.playingIndex !== null ? (
@@ -129,10 +160,22 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
                     </>
                   ) : (
                     <>
+                      {hasVoice && (
+                        <button className="practice-button" onClick={() => toggleVoice(idea)}>
+                          {voice.playingId === idea.id ? "정지" : "녹음 듣기"}
+                        </button>
+                      )}
                       {chordList && (
                         <button
                           className="practice-button"
-                          onClick={() => (active ? player.stop() : player.play(instrumentId, chordList, idea.id))}
+                          onClick={() => {
+                            if (active) {
+                              player.stop();
+                            } else {
+                              stopVoice();
+                              player.play(instrumentId, chordList, idea.id);
+                            }
+                          }}
                         >
                           {!active ? "들어보기" : player.loadingSound ? "불러오는 중…" : "정지"}
                         </button>
@@ -144,6 +187,8 @@ function Notebook({ ideas, onChangeIdeas, onOpenInspiration }) {
                 </div>
                 {audioError === "unsupported" && <p className="time-error insp-error">이 브라우저에서는 소리를 낼 수 없어요.</p>}
                 {audioError === "load" && <p className="time-error insp-error">소리를 불러오지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.</p>}
+                {voiceMissing && editingId !== idea.id && <p className="insp-voice-missing">녹음은 녹음한 기기에서만 들을 수 있어요.</p>}
+                {voice.error?.id === idea.id && <p className="time-error insp-error">{voice.error.message}</p>}
               </div>
               );
             })}
