@@ -36,7 +36,8 @@ src/
   App.css     화면 스타일
   index.css   기본 스타일
   assets/     이미지
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, inspiration.js, timer.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, inspiration.js, timer.js, mic.js)
+              mic.js = 마이크가 막혔을 때 안내 문구 (튜너·음성 메모가 함께 씀, 설치한 앱이면 브라우저 설정 경로 안내)
               inspirationData.js = 영감 탭의 단어·코드 진행 목록 (실제 곡 제목·가사는 넣지 않는다)
               supabase.js = Supabase 연결 (키가 없으면 null)
 public/       파비콘, 로고(logo.svg), manifest.webmanifest와 icons/(홈 화면 설치), sw.js(인터넷 없이 열기, 앱 파일과 들은 음원만 저장. 배포본에서만 켠다), sounds/(영감 탭 들어보기 악기 음원, FluidR3 GM, CC BY 3.0. 앱에 출처 표시 필수), privacy.html(개인정보처리방침, 앱과 따로 열리는 페이지. 모으는 정보·맡기는 곳이 바뀌면 함께 고친다)

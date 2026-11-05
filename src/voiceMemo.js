@@ -2,6 +2,7 @@
 // 녹음 파일은 localStorage·백업·계정 동기화에 넣지 않는다 (아이디어의 audioSeconds만 함께 간다).
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MAX_RECORD_SECONDS } from "./lib/inspiration";
+import { isInstalledApp, micErrorMessage } from "./lib/mic";
 
 // ---------- 기기 저장 (IndexedDB: 브라우저의 큰 저장 공간) ----------
 const DB_NAME = "muselog-audio";
@@ -41,16 +42,6 @@ export const deleteAudio = id => withStore("readwrite", store => store.delete(id
 export const savedAudioIds = () => withStore("readonly", store => store.getAllKeys());
 
 // ---------- 녹음 ----------
-function micErrorMessage(error) {
-  if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
-    return "마이크 사용이 허락되지 않았어요. 주소창 왼쪽 자물쇠에서 마이크를 허용해 주세요.";
-  }
-  if (error?.name === "NotFoundError" || error?.name === "OverconstrainedError") {
-    return "마이크를 찾지 못했어요. 마이크가 연결되어 있는지 확인해 주세요.";
-  }
-  return "마이크를 켜지 못했어요. 다른 앱이 마이크를 쓰고 있지 않은지 확인해 주세요.";
-}
-
 // status: "idle"(녹음 없음) / "starting" / "recording" / "done"(녹음 있음)
 // 화면에서 사라지면(탭 이동) 녹음 중이던 것은 멈추고 버린다
 export function useVoiceRecorder() {
@@ -89,7 +80,7 @@ export function useVoiceRecorder() {
       // 노래·흥얼거림이 뭉개지지 않게 잡음 제거·울림 제거를 끈다
       stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
     } catch (err) {
-      setError(micErrorMessage(err));
+      setError(micErrorMessage(err, isInstalledApp()));
       setStatus(blob ? "done" : "idle");
       return;
     }

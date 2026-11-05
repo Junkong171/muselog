@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { isInstalledApp, micErrorMessage } from "./lib/mic";
 import { A4_FREQUENCY, detectPitch, frequencyToNote, tuningState } from "./lib/tuner";
 
 const BUFFER_SIZE = 4096; // 한 번에 듣는 소리 길이 (48kHz에서 약 0.085초, 베이스 낮은 E도 몇 주기 들어감)
@@ -6,16 +7,6 @@ const LISTEN_EVERY_MS = 40; // 1초에 약 25번 다시 잰다
 const HOLD_MS = 1000; // 소리가 멈춘 뒤 마지막 음을 흐리게 보여 주는 시간
 
 const STATE_TEXT = { in: "맞음", flat: "낮음", sharp: "높음" };
-
-function micErrorMessage(error) {
-  if (error?.name === "NotAllowedError" || error?.name === "SecurityError") {
-    return "마이크 사용이 허락되지 않았어요. 주소창 왼쪽 자물쇠에서 마이크를 허용해 주세요.";
-  }
-  if (error?.name === "NotFoundError" || error?.name === "OverconstrainedError") {
-    return "마이크를 찾지 못했어요. 마이크가 연결되어 있는지 확인해 주세요.";
-  }
-  return "마이크를 켜지 못했어요. 다른 앱이 마이크를 쓰고 있지 않은지 확인해 주세요.";
-}
 
 function Tuner() {
   const [status, setStatus] = useState("off"); // off / starting / on
@@ -50,7 +41,7 @@ function Tuner() {
       });
     } catch (e) {
       if (!mountedRef.current) return;
-      setError(micErrorMessage(e));
+      setError(micErrorMessage(e, isInstalledApp()));
       setStatus("off");
       return;
     }
