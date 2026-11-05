@@ -38,7 +38,7 @@ src/
   lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, inspiration.js, timer.js)
               inspirationData.js = 영감 탭의 단어·코드 진행 목록 (실제 곡 제목·가사는 넣지 않는다)
               supabase.js = Supabase 연결 (키가 없으면 null)
-public/       파비콘, 로고(logo.svg), sounds/(영감 탭 들어보기 악기 음원, FluidR3 GM, CC BY 3.0. 앱에 출처 표시 필수), privacy.html(개인정보처리방침, 앱과 따로 열리는 페이지. 모으는 정보·맡기는 곳이 바뀌면 함께 고친다)
+public/       파비콘, 로고(logo.svg), manifest.webmanifest와 icons/(홈 화면 설치), sw.js(인터넷 없이 열기, 앱 파일과 들은 음원만 저장. 배포본에서만 켠다), sounds/(영감 탭 들어보기 악기 음원, FluidR3 GM, CC BY 3.0. 앱에 출처 표시 필수), privacy.html(개인정보처리방침, 앱과 따로 열리는 페이지. 모으는 정보·맡기는 곳이 바뀌면 함께 고친다)
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 ```
 
