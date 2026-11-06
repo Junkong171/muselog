@@ -29,8 +29,8 @@ async function loadNotes(ctx, instrumentId, notes) {
 }
 
 // 코드 하나를 예약한다. 맨 앞 음이 베이스라 함께 울리고, 음이 많으면 소리가 뭉치지 않게 줄인다.
-function scheduleChord(ctx, buffers, instrument, notes, time) {
-  const end = time + CHORD_SECONDS;
+function scheduleChord(ctx, buffers, instrument, notes, time, seconds) {
+  const end = time + seconds;
   const level = instrument.gain * Math.min(1, 4 / notes.length);
   notes.forEach((midi, i) => {
     const source = ctx.createBufferSource();
@@ -45,7 +45,7 @@ function scheduleChord(ctx, buffers, instrument, notes, time) {
   });
 }
 
-// 영감 탭과 수첩 탭이 함께 쓰는 코드 재생. 화면에서 사라지면 소리를 멈춘다.
+// 영감 탭, 수첩 탭, 작업실 코드표가 함께 쓰는 코드 재생. 화면에서 사라지면 소리를 멈춘다.
 // id = 무엇을 재생하는지 구분하는 값 (수첩의 아이디어 id, 하나뿐이면 생략)
 export function useChordPlayer() {
   const [activeId, setActiveId] = useState(null);
@@ -67,8 +67,8 @@ export function useChordPlayer() {
 
   useEffect(() => stop, [stop]);
 
-  // chordList = 코드마다 음 번호 배열
-  async function play(instrumentId, chordList, id = null) {
+  // chordList = 코드마다 음 번호 배열, seconds = 코드 하나의 길이 (작업실 스케일은 한 음씩 짧게)
+  async function play(instrumentId, chordList, id = null, seconds = CHORD_SECONDS) {
     stop();
     setAudioError(null);
     let ctx = null;
@@ -91,12 +91,12 @@ export function useChordPlayer() {
       setLoadingSound(false);
       const start = ctx.currentTime + 0.05;
       chordList.forEach((notes, i) => {
-        scheduleChord(ctx, buffers, instrument, notes, start + i * CHORD_SECONDS);
+        scheduleChord(ctx, buffers, instrument, notes, start + i * seconds, seconds);
       });
       setPlayingIndex(0);
       // 소리는 AudioContext가 정확히 내고, 화면 강조만 시계를 보고 따라간다
       playback.timer = setInterval(() => {
-        const index = Math.floor((ctx.currentTime - start) / CHORD_SECONDS);
+        const index = Math.floor((ctx.currentTime - start) / seconds);
         if (index >= chordList.length) stop();
         else setPlayingIndex(Math.max(0, index));
       }, 50);
