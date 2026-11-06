@@ -1,5 +1,5 @@
 // 계정 동기화 판단 (순수 함수). 실제 서버 읽기·쓰기는 App.jsx에서 supabase로 한다.
-// "data"는 백업 묶음 안쪽의 { 12개 키: 값 } 객체다 (buildBackup(...).data).
+// "data"는 백업 묶음 안쪽의 { 13개 키: 값 } 객체다 (buildBackup(...).data).
 import { INITIAL_SONGS } from "./songs";
 
 export const SYNC_META_KEY = "muselog-sync-meta";

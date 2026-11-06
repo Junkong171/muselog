@@ -4,7 +4,7 @@
 
 - React 19 + Vite, JavaScript (TypeScript 아님), 순수 CSS (UI 라이브러리 없음)
 - 백엔드 없음: 모든 데이터는 브라우저 localStorage에 저장된다.
-- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 로그인하면 기록 키 묶음(백업 형식, BACKUP_KEYS 12개)을 Supabase 표 `user_data`에 자동 저장·불러오기한다(F-010, 판단 로직 `src/lib/sync.js`). 표와 보안 규칙(RLS: 본인 줄만)은 `docs/supabase/user_data.sql`. 회원 탈퇴(F-014)는 본인 계정만 지우는 함수 `delete_my_account`(`docs/supabase/delete_account.sql`)를 부르고, `user_data`는 함께 지워진다.
+- 로그인(선택): Supabase로 구글·카카오 로그인. 키는 `.env.local`(git 제외)과 Vercel 환경 변수에만 둔다. 키 이름은 `.env.example` 참고. 키가 없으면 로그인 버튼 없이 지금처럼 동작한다. 로그인하면 기록 키 묶음(백업 형식, BACKUP_KEYS 13개)을 Supabase 표 `user_data`에 자동 저장·불러오기한다(F-010, 판단 로직 `src/lib/sync.js`). 표와 보안 규칙(RLS: 본인 줄만)은 `docs/supabase/user_data.sql`. 회원 탈퇴(F-014)는 본인 계정만 지우는 함수 `delete_my_account`(`docs/supabase/delete_account.sql`)를 부르고, `user_data`는 함께 지워진다.
 
 ## 사용자 안내 방식
 
@@ -26,6 +26,7 @@ src/
   main.jsx    진입점
   App.jsx     앱 전체 (탭 8개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계 / 캘린더 / 작업실 / 영감 / 수첩)
   Metronome.jsx  작업실 탭의 메트로놈 (Web Audio API로 소리 재생)
+  Drone.jsx      작업실 탭의 기준음(드론) (고른 음·화음을 끌 때까지 계속 울림, 음원 파일 없이 Web Audio API로 만듦)
   Routine.jsx    작업실 탭의 "오늘의 루틴" 카드 (매일 체크하는 고정 연습 목록)
   Tuner.jsx      작업실 탭의 튜너 (마이크로 음 높이 재기, 저장하는 값 없음)
   PracticeTimer.jsx  모든 탭 위쪽의 연습 타이머 (시작·휴식·종료 후 연습 기록에 저장)
@@ -35,7 +36,7 @@ src/
   useChordPlayer.js  영감·수첩 탭이 함께 쓰는 코드 재생 (음원 불러오기, Web Audio API)
   App.css     화면 스타일
   index.css   기본 스타일
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, inspiration.js, timer.js, mic.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, drone.js, inspiration.js, timer.js, mic.js)
               mic.js = 마이크가 막혔을 때 안내 문구 (튜너·음성 메모가 함께 씀, 설치한 앱이면 브라우저 설정 경로 안내)
               inspirationData.js = 영감 탭의 단어·코드 진행 목록 (실제 곡 제목·가사는 넣지 않는다)
               supabase.js = Supabase 연결 (키가 없으면 null)
@@ -57,6 +58,7 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-song-sort` | 연습곡 정렬 기준 (문자열 `"added"` / `"title"` / `"progress"`, 없거나 깨지면 `"added"`) |
 | `muselog-metronome` | 메트로놈 설정 `{ bpm(10~300), beats(2/3/4/6), accents(강조할 박 번호 배열, 1~6), subdivision(1~4, 리듬: ♩ ♫ 셋잇단음표 ♬) }` (없거나 깨진 항목은 기본값 120 / 4 / [1] / 1, 예전 `accent: true/false`는 `[1]` / `[]`로 읽음) |
 | `muselog-routine` | 고정 연습 루틴 목록 `[{ id, title(1~40자) }]` (배열 순서 = 보이는 순서, 깨진 항목은 버림) |
+| `muselog-drone` | 기준음 설정 `{ note(0~11, 0 = 도 C), octave(2/3/4 = 낮게/보통/높게), mode("root"/"fifth"/"major"/"minor" = 근음만/근음+5도/장화음/단화음), volume(0~100) }` (없거나 깨진 항목은 기본값 9(라) / 3 / "root" / 60 — `normalizeDrone`) |
 | `muselog-routine-checks` | 오늘 체크한 루틴 `{ date("YYYY-MM-DD"), done: [id] }` (date가 오늘이 아니면 체크 없음으로 읽음) |
 | `muselog-tab-order` | 사이드바 탭 순서 (탭 이름 배열, 없거나 깨지면 기본 순서. 모르는 이름·중복은 버리고 빠진 탭은 뒤에 붙임 — `normalizeTabOrder`) |
 | `muselog-timer` | 지금 재는 연습 타이머 `{ status("running"/"resting"), since(시각 숫자), practiceMs, restMs }`, 재고 있지 않으면 키 없음. 이 기기 전용이라 백업·동기화에 넣지 않는다. 깨지면 처음 상태 |
