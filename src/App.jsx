@@ -38,6 +38,8 @@ import {
 import { normalizeMetronome } from "./lib/metronome";
 import { normalizeIdeas } from "./lib/inspiration";
 import Metronome from "./Metronome";
+import Drone from "./Drone";
+import { normalizeDrone } from "./lib/drone";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
 import Inspiration from "./Inspiration";
 import Notebook from "./Notebook";
@@ -123,6 +125,7 @@ function App() {
   const [editingPeriodId, setEditingPeriodId] = useState(null);
   const [periodError, setPeriodError] = useState(false);
   const [metronome, setMetronome] = useState(() => normalizeMetronome(loadData("muselog-metronome", null)));
+  const [drone, setDrone] = useState(() => normalizeDrone(loadData("muselog-drone", null)));
   const [routine, setRoutine] = useState(() => normalizeRoutine(loadData("muselog-routine", [])));
   // { date, done } 그대로 두고, 오늘 것인지는 화면을 그릴 때 todayChecks로 판단한다
   const [routineChecks, setRoutineChecks] = useState(() => loadData("muselog-routine-checks", null));
@@ -207,6 +210,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("muselog-metronome", JSON.stringify(metronome));
   }, [metronome]);
+
+  useEffect(() => {
+    localStorage.setItem("muselog-drone", JSON.stringify(drone));
+  }, [drone]);
 
   useEffect(() => {
     localStorage.setItem("muselog-routine", JSON.stringify(routine));
@@ -1387,6 +1394,7 @@ function App() {
               onSaveLog={recordPractice}
               timerActive={timerActive}
             />
+            <Drone settings={drone} onChangeSettings={setDrone} />
             <Tuner />
           </>
         ) : (
