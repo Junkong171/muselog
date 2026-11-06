@@ -29,14 +29,15 @@ src/
   Drone.jsx      작업실 탭의 기준음(드론) (고른 음·화음을 끌 때까지 계속 울림, 음원 파일 없이 Web Audio API로 만듦)
   Routine.jsx    작업실 탭의 "오늘의 루틴" 카드 (매일 체크하는 고정 연습 목록)
   Tuner.jsx      작업실 탭의 튜너 (마이크로 음 높이 재기, 저장하는 값 없음)
+  ChordChart.jsx 작업실 탭의 코드표·스케일표 (구성음·건반 그림, 피아노 음원으로 들어보기, 저장하는 값 없음)
   PracticeTimer.jsx  모든 탭 위쪽의 연습 타이머 (시작·휴식·종료 후 연습 기록에 저장)
   Inspiration.jsx  영감 탭 (키워드 뽑기, 코드 진행과 들어보기, 아이디어 쓰기)
   Notebook.jsx   수첩 탭 (저장한 아이디어 보기·수정·삭제, 코드·녹음 다시 듣기)
   voiceMemo.js   아이디어 음성 메모 (마이크 녹음·재생, 녹음 파일은 IndexedDB `muselog-audio`의 `memos`에 아이디어 id로 저장. 이 기기 전용이라 백업·동기화에 넣지 않는다)
-  useChordPlayer.js  영감·수첩 탭이 함께 쓰는 코드 재생 (음원 불러오기, Web Audio API)
+  useChordPlayer.js  영감·수첩 탭과 작업실 코드표가 함께 쓰는 코드 재생 (음원 불러오기, Web Audio API)
   App.css     화면 스타일
   index.css   기본 스타일
-  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, drone.js, inspiration.js, timer.js, mic.js)
+  lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, drone.js, chordChart.js, inspiration.js, timer.js, mic.js)
               mic.js = 마이크가 막혔을 때 안내 문구 (튜너·음성 메모가 함께 씀, 설치한 앱이면 브라우저 설정 경로 안내)
               inspirationData.js = 영감 탭의 단어·코드 진행 목록 (실제 곡 제목·가사는 넣지 않는다)
               supabase.js = Supabase 연결 (키가 없으면 null)
