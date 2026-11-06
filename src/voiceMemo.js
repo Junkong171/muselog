@@ -1,4 +1,4 @@
-// 아이디어 음성 메모: 마이크로 녹음하고, 녹음 파일을 이 기기 브라우저(IndexedDB)에만 저장한다.
+// 아이디어 음성 메모와 작업실 연습 녹음: 마이크로 녹음하고, 녹음 파일을 이 기기 브라우저(IndexedDB)에만 저장한다.
 // 녹음 파일은 localStorage·백업·계정 동기화에 넣지 않는다 (아이디어의 audioSeconds만 함께 간다).
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MAX_RECORD_SECONDS } from "./lib/inspiration";
@@ -6,7 +6,9 @@ import { isInstalledApp, micErrorMessage } from "./lib/mic";
 
 // ---------- 기기 저장 (IndexedDB: 브라우저의 큰 저장 공간) ----------
 const DB_NAME = "muselog-audio";
+const DB_VERSION = 2; // 1: memos, 2: practice 추가
 const STORE = "memos"; // 열쇠 = 아이디어 id, 값 = 녹음 파일(Blob)
+const PRACTICE_STORE = "practice"; // 열쇠 = 녹음 id, 값 = { id, createdAt, seconds, songTitle, blob }
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -14,19 +16,24 @@ function openDb() {
       reject(new Error("IndexedDB 없음"));
       return;
     }
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    // 버전을 올릴 때 이미 있는 저장소(아이디어 녹음)는 그대로 두고 없는 것만 만든다
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      if (!db.objectStoreNames.contains(PRACTICE_STORE)) db.createObjectStore(PRACTICE_STORE, { keyPath: "id" });
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
 
-async function withStore(mode, action) {
+async function withStore(mode, action, storeName = STORE) {
   const db = await openDb();
   try {
     return await new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE, mode);
-      const request = action(transaction.objectStore(STORE));
+      const transaction = db.transaction(storeName, mode);
+      const request = action(transaction.objectStore(storeName));
       transaction.oncomplete = () => resolve(request.result);
       transaction.onerror = () => reject(transaction.error);
       transaction.onabort = () => reject(transaction.error);
@@ -41,10 +48,17 @@ export const loadAudio = id => withStore("readonly", store => store.get(id));
 export const deleteAudio = id => withStore("readwrite", store => store.delete(id));
 export const savedAudioIds = () => withStore("readonly", store => store.getAllKeys());
 
+// 작업실 연습 녹음
+export const savePracticeRecording = recording => withStore("readwrite", store => store.put(recording), PRACTICE_STORE);
+export const listPracticeRecordings = () => withStore("readonly", store => store.getAll(), PRACTICE_STORE);
+export const deletePracticeRecording = id => withStore("readwrite", store => store.delete(id), PRACTICE_STORE);
+
 // ---------- 녹음 ----------
 // status: "idle"(녹음 없음) / "starting" / "recording" / "done"(녹음 있음)
-// 화면에서 사라지면(탭 이동) 녹음 중이던 것은 멈추고 버린다
-export function useVoiceRecorder() {
+// maxSeconds = 이만큼 녹음하면 저절로 끝낸다
+// onComplete(blob, seconds) = 녹음이 끝날 때마다 부른다. 있으면 화면에서 사라질 때(탭 이동)도 그때까지 녹음한 것을 넘기고,
+// 없으면 화면에서 사라질 때 녹음 중이던 것은 멈추고 버린다 (아이디어 음성 메모)
+export function useVoiceRecorder({ maxSeconds = MAX_RECORD_SECONDS, onComplete = null } = {}) {
   const [status, setStatus] = useState("idle");
   const [seconds, setSeconds] = useState(0);
   const [blob, setBlob] = useState(null);
@@ -54,6 +68,13 @@ export function useVoiceRecorder() {
   const timerRef = useRef(null);
   const startedAtRef = useRef(0);
   const discardRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  const maxSecondsRef = useRef(maxSeconds);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+    maxSecondsRef.current = maxSeconds;
+  });
 
   const releaseMic = useCallback(() => {
     clearInterval(timerRef.current);
@@ -105,16 +126,22 @@ export function useVoiceRecorder() {
     recorder.onstop = () => {
       releaseMic();
       recorderRef.current = null;
-      if (discardRef.current) return;
+      const unmounted = discardRef.current;
+      if (unmounted && !onCompleteRef.current) return;
       const elapsed = (Date.now() - startedAtRef.current) / 1000;
       if (!chunks.length) {
+        if (unmounted) return;
         setError("녹음된 소리가 없어요. 다시 녹음해 주세요.");
         setBlob(null);
         setStatus("idle");
         return;
       }
-      setBlob(new Blob(chunks, { type: recorder.mimeType || chunks[0].type }));
-      setSeconds(Math.min(Math.max(1, Math.round(elapsed)), MAX_RECORD_SECONDS));
+      const recorded = new Blob(chunks, { type: recorder.mimeType || chunks[0].type });
+      const recordedSeconds = Math.min(Math.max(1, Math.round(elapsed)), maxSecondsRef.current);
+      onCompleteRef.current?.(recorded, recordedSeconds);
+      if (unmounted) return;
+      setBlob(recorded);
+      setSeconds(recordedSeconds);
       setStatus("done");
     };
     recorderRef.current = recorder;
@@ -125,8 +152,8 @@ export function useVoiceRecorder() {
     setStatus("recording");
     timerRef.current = setInterval(() => {
       const elapsed = (Date.now() - startedAtRef.current) / 1000;
-      setSeconds(Math.min(Math.floor(elapsed), MAX_RECORD_SECONDS));
-      if (elapsed >= MAX_RECORD_SECONDS) stop();
+      setSeconds(Math.min(Math.floor(elapsed), maxSecondsRef.current));
+      if (elapsed >= maxSecondsRef.current) stop();
     }, 250);
   }, [blob, releaseMic, stop]);
 
