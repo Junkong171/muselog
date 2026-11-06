@@ -47,6 +47,7 @@ import PracticeTimer from "./PracticeTimer";
 import Routine, { RoutineChecklist } from "./Routine";
 import Tuner from "./Tuner";
 import ChordChart from "./ChordChart";
+import PracticeRecorder from "./PracticeRecorder";
 import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/backup";
 import { authErrorFromUrl, displayName } from "./lib/auth";
 import { supabase } from "./lib/supabase";
@@ -1397,6 +1398,7 @@ function App() {
             />
             <Drone settings={drone} onChangeSettings={setDrone} />
             <Tuner />
+            <PracticeRecorder songs={songs} />
             <ChordChart />
           </>
         ) : (
