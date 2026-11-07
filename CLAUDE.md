@@ -25,6 +25,7 @@
 src/
   main.jsx    진입점
   App.jsx     앱 전체 (탭 8개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계 / 캘린더 / 작업실 / 영감 / 수첩)
+              (영감·수첩 탭과 작업실 도구는 React.lazy로 따로 나눠 불러온다. vite.config.js가 나눈 파일을 index.html에 미리 받기로 적어 sw.js가 함께 저장한다)
   Metronome.jsx  작업실 탭의 메트로놈 (Web Audio API로 소리 재생)
   Drone.jsx      작업실 탭의 기준음(드론) (고른 음·화음을 끌 때까지 계속 울림, 음원 파일 없이 Web Audio API로 만듦)
   Routine.jsx    작업실 탭의 "오늘의 루틴" 카드 (매일 체크하는 고정 연습 목록)
@@ -41,7 +42,7 @@ src/
   lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, drone.js, chordChart.js, practiceRecordings.js, inspiration.js, timer.js, mic.js)
               mic.js = 마이크가 막혔을 때 안내 문구 (튜너·음성 메모가 함께 씀, 설치한 앱이면 브라우저 설정 경로 안내)
               inspirationData.js = 영감 탭의 단어·코드 진행 목록 (실제 곡 제목·가사는 넣지 않는다)
-              supabase.js = Supabase 연결 (키가 없으면 null)
+              supabase.js = Supabase 연결 (키가 없으면 authEnabled = false. 연결 코드는 첫 화면과 따로 나눠 loadSupabase()로 불러온다)
 public/       파비콘, 로고(logo.svg), manifest.webmanifest와 icons/(홈 화면 설치), sw.js(인터넷 없이 열기, 앱 파일과 들은 음원만 저장. 배포본에서만 켠다), sounds/(영감 탭 들어보기 악기 음원, FluidR3 GM, CC BY 3.0. 앱에 출처 표시 필수), privacy.html(개인정보처리방침, 앱과 따로 열리는 페이지. 모으는 정보·맡기는 곳이 바뀌면 함께 고친다), licenses.html(출처·라이선스: 음원·글꼴·앱에 들어가는 오픈소스 코드. 외부 자료나 라이브러리를 추가하거나 버전을 올리면 함께 고친다. `src/lib/licenses.test.js`가 dependencies 누락·버전 차이를 잡는다)
 docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 ```

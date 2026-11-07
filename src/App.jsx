@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Component, Fragment, lazy, Suspense, useEffect, useRef, useState } from "react";
 import "./App.css";
 import { dateKey, sumMinutesByDay, calcStreak, streakMessage, getWeekDays, rankSongs } from "./lib/stats";
 import {
@@ -37,22 +37,40 @@ import {
 } from "./lib/songs";
 import { normalizeMetronome } from "./lib/metronome";
 import { normalizeIdeas } from "./lib/inspiration";
-import Metronome from "./Metronome";
-import Drone from "./Drone";
 import { normalizeDrone } from "./lib/drone";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
-import Inspiration from "./Inspiration";
-import Notebook from "./Notebook";
 import PracticeTimer from "./PracticeTimer";
 import Routine, { RoutineChecklist } from "./Routine";
-import Tuner from "./Tuner";
-import ChordChart from "./ChordChart";
-import PracticeRecorder from "./PracticeRecorder";
 import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/backup";
 import { authErrorFromUrl, displayName } from "./lib/auth";
-import { supabase } from "./lib/supabase";
+import { authEnabled, getSupabase, loadSupabase } from "./lib/supabase";
 import { decideSync, formatSummary, hashData, normalizeSyncMeta, summarizeData, SYNC_META_KEY } from "./lib/sync";
 import { DEFAULT_TABS, isDefaultTabOrder, moveTab, normalizeTabOrder, TAB_ICONS } from "./lib/tabs";
+
+// 그 탭을 열 때만 쓰는 화면은 따로 나눈 파일에서 불러온다 (첫 화면이 빨리 뜨게)
+const Inspiration = lazy(() => import("./Inspiration"));
+const Notebook = lazy(() => import("./Notebook"));
+const Metronome = lazy(() => import("./Metronome"));
+const Drone = lazy(() => import("./Drone"));
+const Tuner = lazy(() => import("./Tuner"));
+const PracticeRecorder = lazy(() => import("./PracticeRecorder"));
+const ChordChart = lazy(() => import("./ChordChart"));
+
+// 나눈 파일을 받지 못하면(인터넷 끊김 등) 하얀 화면 대신 안내를 보인다. 다시 받으려면 앱을 다시 연다
+class LoadBoundary extends Component {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    if (this.state.failed) {
+      return <p className="tuner-error" role="alert">화면을 불러오지 못했어요. 인터넷을 확인하고 다시 열어 주세요.</p>;
+    }
+    return <Suspense fallback={<p className="chart-empty">불러오는 중…</p>}>{this.props.children}</Suspense>;
+  }
+}
 
 const CAL_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -80,7 +98,7 @@ function App() {
   const [purposeDraft, setPurposeDraft] = useState("");
   const purposeInputRef = useRef(null);
   const backupInputRef = useRef(null);
-  // 로그인 (Supabase 키가 없으면 supabase가 null이라 로그인 버튼 없이 지금처럼 동작)
+  // 로그인 (Supabase 키가 없으면 로그인 버튼 없이 지금처럼 동작). 연결 코드는 첫 화면이 뜬 뒤 불러온다
   const [user, setUser] = useState(null);
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginError, setLoginError] = useState(() => authErrorFromUrl(window.location.href).hasError);
@@ -151,11 +169,22 @@ function App() {
   }, []);
 
   // 브라우저에 남은 로그인 정보를 읽고, 로그인·로그아웃이 일어날 때마다 user를 바꾼다
+  // (연결 코드는 첫 화면이 뜬 뒤 불러온다. 못 불러오면(인터넷 끊김) 로그인 없이 쓰고, 로그인 버튼을 누르면 다시 시도)
   useEffect(() => {
-    if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
-    return () => data.subscription.unsubscribe();
+    if (!authEnabled) return;
+    let subscription = null;
+    let alive = true;
+    loadSupabase()
+      .then(supabase => {
+        if (!alive) return;
+        supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+        subscription = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null)).data.subscription;
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+      subscription?.unsubscribe();
+    };
   }, []);
 
   // 회원 탈퇴 창: Esc를 누르면 닫힌다 (탈퇴하는 중에는 닫히지 않음)
@@ -233,18 +262,18 @@ function App() {
   // 로그인하면(또는 앱을 열 때 이미 로그인돼 있으면) 계정 기록과 비교해 올릴지·불러올지·물을지 정한다
   // (로그아웃하면 userId가 없어져 아래 자동 저장이 멈추고, 저장 상태·선택 창은 로그인했을 때만 보인다)
   useEffect(() => {
-    if (!supabase || !userId) return;
+    if (!userId) return; // userId는 로그인 연결(supabase)이 생긴 뒤에만 생긴다
     startSync(userId);
   }, [userId]);
 
   // 기록이 바뀌면 2초 뒤 계정에 저장한다. 위의 localStorage 저장 effect들 다음에 있어야 바뀐 값을 읽는다
   useEffect(() => {
-    if (!supabase || !userId || !syncReady) return;
+    if (!userId || !syncReady) return;
     const meta = normalizeSyncMeta(loadData(SYNC_META_KEY, null));
     if (meta.userId === userId && hashData(readLocalData()) === meta.hash) return;
     const timer = setTimeout(() => uploadLocal(userId), 2000); // 올리기 시작하면 "저장 중…"
     return () => clearTimeout(timer);
-  }, [userId, syncReady, songs, minutes, goal, logs, events, periods, ideas, songSort, metronome, routine, routineChecks, tabOrder]);
+  }, [userId, syncReady, songs, minutes, goal, logs, events, periods, ideas, songSort, metronome, drone, routine, routineChecks, tabOrder]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -534,7 +563,14 @@ function App() {
   // 로그인 화면으로 갔다가 지금 주소로 돌아온다 (개발용이면 localhost, 배포 사이트면 배포 주소)
   async function login(provider) {
     setLoginError(false);
-    const { error } = await supabase.auth.signInWithOAuth({
+    let client;
+    try {
+      client = await loadSupabase();
+    } catch {
+      setLoginError(true);
+      return;
+    }
+    const { error } = await client.auth.signInWithOAuth({
       provider,
       options: { redirectTo: window.location.origin + window.location.pathname },
     });
@@ -543,7 +579,7 @@ function App() {
 
   // 로그아웃해도 이 브라우저의 기록은 지우지 않는다 (자동 저장은 userId가 없어지면서 멈춘다)
   async function logout() {
-    await supabase.auth.signOut();
+    await getSupabase().auth.signOut();
     setUser(null);
     setSyncReady(false);
     setSyncStatus(null);
@@ -567,7 +603,7 @@ function App() {
     setDeleteError(false);
     const wasSyncReady = syncReady;
     setSyncReady(false); // 지우는 동안 자동 저장이 다시 올리지 않게
-    const { error } = await supabase.rpc("delete_my_account");
+    const { error } = await getSupabase().rpc("delete_my_account");
     if (error) {
       setDeleteBusy(false);
       setDeleteError(true);
@@ -575,7 +611,7 @@ function App() {
       return;
     }
     // 계정이 없어졌으니 서버에 묻지 않고 이 브라우저의 로그인 정보만 지운다
-    await supabase.auth.signOut({ scope: "local" });
+    await getSupabase().auth.signOut({ scope: "local" });
     localStorage.removeItem(SYNC_META_KEY);
     setUser(null);
     setSyncStatus(null);
@@ -596,7 +632,7 @@ function App() {
 
   // 계정 기록 읽기: 없으면 null, 형식이 깨졌어도 null(다음 저장 때 이 기기 기록으로 덮인다)
   async function fetchCloud(id) {
-    const { data, error } = await supabase.from("user_data").select("data, updated_at").eq("user_id", id).maybeSingle();
+    const { data, error } = await getSupabase().from("user_data").select("data, updated_at").eq("user_id", id).maybeSingle();
     if (error) throw error;
     if (!data) return null;
     const parsed = parseBackup(JSON.stringify(data.data));
@@ -607,7 +643,7 @@ function App() {
   async function uploadLocal(id) {
     setSyncStatus("saving");
     const backup = buildBackup(key => localStorage.getItem(key));
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from("user_data")
       .upsert({ user_id: id, data: backup })
       .select("updated_at")
@@ -811,7 +847,7 @@ function App() {
               <div className="profile login-anchor" ref={loginBoxRef}>
                 <img className="avatar avatar-logo" src="/logo.svg" alt="" />
                 <span>My Studio</span>
-                {supabase && (
+                {authEnabled && (
                   <button
                     className="cal-today-button"
                     onClick={() => setLoginOpen(open => !open)}
@@ -1364,13 +1400,17 @@ function App() {
             </section>
           </>
         ) : activeTab === "영감" ? (
-          <Inspiration
-            ideaCount={ideas.length}
-            onChangeIdeas={setIdeas}
-            onOpenNotebook={() => setActiveTab("수첩")}
-          />
+          <LoadBoundary key="영감">
+            <Inspiration
+              ideaCount={ideas.length}
+              onChangeIdeas={setIdeas}
+              onOpenNotebook={() => setActiveTab("수첩")}
+            />
+          </LoadBoundary>
         ) : activeTab === "수첩" ? (
-          <Notebook ideas={ideas} onChangeIdeas={setIdeas} onOpenInspiration={() => setActiveTab("영감")} />
+          <LoadBoundary key="수첩">
+            <Notebook ideas={ideas} onChangeIdeas={setIdeas} onOpenInspiration={() => setActiveTab("영감")} />
+          </LoadBoundary>
         ) : activeTab === "작업실" ? (
           <>
             <section className="section-heading">
@@ -1389,17 +1429,19 @@ function App() {
               onDelete={deleteRoutineItem}
             />
 
-            <Metronome
-              settings={metronome}
-              onChangeSettings={setMetronome}
-              songs={songs}
-              onSaveLog={recordPractice}
-              timerActive={timerActive}
-            />
-            <Drone settings={drone} onChangeSettings={setDrone} />
-            <Tuner />
-            <PracticeRecorder songs={songs} />
-            <ChordChart />
+            <LoadBoundary key="작업실">
+              <Metronome
+                settings={metronome}
+                onChangeSettings={setMetronome}
+                songs={songs}
+                onSaveLog={recordPractice}
+                timerActive={timerActive}
+              />
+              <Drone settings={drone} onChangeSettings={setDrone} />
+              <Tuner />
+              <PracticeRecorder songs={songs} />
+              <ChordChart />
+            </LoadBoundary>
           </>
         ) : (
           <>
