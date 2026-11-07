@@ -2461,6 +2461,87 @@ select:focus-visible {
   margin-top: 6px;
 }
 
+/* ---------- 코드 전환 연습 ---------- */
+.chord-drill .chart-head {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.drill-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 150px;
+  margin-top: 14px;
+  padding: 16px 12px;
+  border-radius: 14px;
+  background: #f7f4fc;
+  text-align: center;
+}
+
+.drill-current {
+  color: #3a3055;
+  font-size: 64px;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.drill-next {
+  color: #5a4a8a;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.drill-idle {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.drill-dots {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.drill-dots span {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #d9d0ec;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.drill-dots span.on {
+  border-color: var(--purple-dark);
+  background: var(--purple-dark);
+}
+
+.drill-options {
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.drill-pool {
+  text-align: center;
+}
+
+.drill-bpm {
+  margin-top: 14px;
+}
+
+.drill-bpm .metro-bpm-value strong {
+  font-size: 40px;
+}
+
+@media (max-width: 700px) {
+  .drill-current {
+    font-size: 52px;
+  }
+}
+
 /* ---------- 연습 녹음 ---------- */
 .rec-controls {
   justify-content: center;
