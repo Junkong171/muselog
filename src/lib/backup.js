@@ -18,6 +18,7 @@ export const BACKUP_KEYS = [
   "muselog-metronome",
   "muselog-drone",
   "muselog-chord-drill",
+  "muselog-chord-analysis",
   "muselog-routine",
   "muselog-routine-checks",
   "muselog-tab-order",
