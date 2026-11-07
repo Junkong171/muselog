@@ -39,6 +39,7 @@ import { normalizeMetronome } from "./lib/metronome";
 import { normalizeIdeas } from "./lib/inspiration";
 import { normalizeDrone } from "./lib/drone";
 import { normalizeChordDrill } from "./lib/chordDrill";
+import { normalizeChordAnalysis } from "./lib/chordAnalysisSettings";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
 import PracticeTimer from "./PracticeTimer";
 import Routine, { RoutineChecklist } from "./Routine";
@@ -57,6 +58,7 @@ const Tuner = lazy(() => import("./Tuner"));
 const PracticeRecorder = lazy(() => import("./PracticeRecorder"));
 const ChordChart = lazy(() => import("./ChordChart"));
 const ChordDrill = lazy(() => import("./ChordDrill"));
+const ChordAnalysis = lazy(() => import("./ChordAnalysis"));
 
 // 나눈 파일을 받지 못하면(인터넷 끊김 등) 하얀 화면 대신 안내를 보인다. 다시 받으려면 앱을 다시 연다
 class LoadBoundary extends Component {
@@ -149,6 +151,7 @@ function App() {
   const [metronome, setMetronome] = useState(() => normalizeMetronome(loadData("muselog-metronome", null)));
   const [drone, setDrone] = useState(() => normalizeDrone(loadData("muselog-drone", null)));
   const [chordDrill, setChordDrill] = useState(() => normalizeChordDrill(loadData("muselog-chord-drill", null)));
+  const [chordAnalysis, setChordAnalysis] = useState(() => normalizeChordAnalysis(loadData("muselog-chord-analysis", null)));
   const [routine, setRoutine] = useState(() => normalizeRoutine(loadData("muselog-routine", [])));
   // { date, done } 그대로 두고, 오늘 것인지는 화면을 그릴 때 todayChecks로 판단한다
   const [routineChecks, setRoutineChecks] = useState(() => loadData("muselog-routine-checks", null));
@@ -254,6 +257,10 @@ function App() {
   }, [chordDrill]);
 
   useEffect(() => {
+    localStorage.setItem("muselog-chord-analysis", JSON.stringify(chordAnalysis));
+  }, [chordAnalysis]);
+
+  useEffect(() => {
     localStorage.setItem("muselog-routine", JSON.stringify(routine));
   }, [routine]);
 
@@ -280,7 +287,7 @@ function App() {
     if (meta.userId === userId && hashData(readLocalData()) === meta.hash) return;
     const timer = setTimeout(() => uploadLocal(userId), 2000); // 올리기 시작하면 "저장 중…"
     return () => clearTimeout(timer);
-  }, [userId, syncReady, songs, minutes, goal, logs, events, periods, ideas, songSort, metronome, drone, chordDrill, routine, routineChecks, tabOrder]);
+  }, [userId, syncReady, songs, minutes, goal, logs, events, periods, ideas, songSort, metronome, drone, chordDrill, chordAnalysis, routine, routineChecks, tabOrder]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
     month: "long",
@@ -1449,6 +1456,7 @@ function App() {
               <PracticeRecorder songs={songs} />
               <ChordChart />
               <ChordDrill settings={chordDrill} onChangeSettings={setChordDrill} />
+              <ChordAnalysis settings={chordAnalysis} onChangeSettings={setChordAnalysis} />
             </LoadBoundary>
           </>
         ) : (

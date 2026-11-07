@@ -2542,6 +2542,220 @@ select:focus-visible {
   }
 }
 
+/* ---------- 코드 분석 ---------- */
+.chord-analysis .chart-head {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ana-options {
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.ana-caption {
+  text-align: center;
+}
+
+.ana-table {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ana-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #ebe5f5;
+  border-radius: 10px;
+  color: #3a3055;
+  background: #faf8fd;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+.ana-row:hover {
+  background: #f1ecf9;
+}
+
+.ana-row.playing,
+.ana-item.playing {
+  border-color: var(--purple-dark);
+  background: #ede6f8;
+}
+
+.ana-roman {
+  color: var(--purple-dark);
+  font-weight: 700;
+}
+
+.ana-chords strong {
+  font-size: 15px;
+}
+
+.ana-func {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #5a4a8a;
+  background: #ece6f7;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ana-func.f-도미넌트 {
+  color: #9a3c4c;
+  background: #fbe8ec;
+}
+
+.ana-func.f-서브도미넌트 {
+  color: #3d6b52;
+  background: #e5f3ea;
+}
+
+.ana-tension {
+  grid-column: 2 / -1;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ana-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ana-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  color: #3a3055;
+  background: #fff;
+  font: inherit;
+  font-size: 15px;
+}
+
+.ana-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ana-key select {
+  max-width: 200px;
+  padding: 8px 10px;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  color: #3a3055;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+}
+
+.ana-result {
+  margin-top: 12px;
+}
+
+.ana-summary {
+  margin: 0;
+  color: #3a3055;
+  font-size: 14px;
+  text-align: center;
+}
+
+.ana-flows {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ana-flows li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: #5a4a8a;
+  background: #f4f1fa;
+  font-size: 12px;
+}
+
+.ana-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ana-item {
+  padding: 10px 12px;
+  border: 1px solid #ebe5f5;
+  border-left: 4px solid #cfc4e6;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.ana-item.k-secondary,
+.ana-item.k-dominant,
+.ana-item.k-subV {
+  border-left-color: #d9798a;
+}
+
+.ana-item.k-borrowed {
+  border-left-color: #6fae88;
+}
+
+.ana-item.k-outside {
+  border-left-color: #b9b3c6;
+}
+
+.ana-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.ana-item-head strong {
+  color: #3a3055;
+  font-size: 18px;
+}
+
+.ana-kind {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ana-notes {
+  margin: 6px 0 0;
+  color: #3a3055;
+  font-size: 13px;
+}
+
+.ana-detail {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* ---------- 연습 녹음 ---------- */
 .rec-controls {
   justify-content: center;
