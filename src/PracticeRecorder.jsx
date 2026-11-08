@@ -15,7 +15,7 @@ import {
   useVoiceRecorder,
 } from "./voiceMemo";
 
-// 작업실 탭의 연습 녹음: 녹음해서 이 기기에 저장하고, 다시 듣고, 파일로 내려받는다
+// 작업실·연습실 탭의 연습 녹음: 녹음해서 이 기기에 저장하고, 다시 듣고, 파일로 내려받는다
 function PracticeRecorder({ songs }) {
   const [recordings, setRecordings] = useState(null); // null = 불러오는 중
   const [loadError, setLoadError] = useState("");

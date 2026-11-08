@@ -24,21 +24,22 @@
 ```
 src/
   main.jsx    진입점
-  App.jsx     앱 전체 (탭 8개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계 / 캘린더 / 작업실 / 영감 / 수첩)
-              (영감·수첩 탭과 작업실 도구는 React.lazy로 따로 나눠 불러온다. vite.config.js가 나눈 파일을 index.html에 미리 받기로 적어 sw.js가 함께 저장한다)
+  App.jsx     앱 전체 (탭 9개: 대시보드 / 내 연습곡 / 연습 기록 / 연습 통계 / 캘린더 / 연습실 / 작업실 / 영감 / 수첩)
+              (작업실 = 루틴·메트로놈·기준음·연습 녹음, 연습실 = 기준음·튜너·연습 녹음·코드표·코드 전환 연습·코드 분석. 기준음·연습 녹음은 두 탭이 같은 설정·녹음을 함께 쓴다)
+              (영감·수첩 탭과 작업실·연습실 도구는 React.lazy로 따로 나눠 불러온다. vite.config.js가 나눈 파일을 index.html에 미리 받기로 적어 sw.js가 함께 저장한다)
   Metronome.jsx  작업실 탭의 메트로놈 (Web Audio API로 소리 재생)
-  Drone.jsx      작업실 탭의 기준음(드론) (고른 음·화음을 끌 때까지 계속 울림, 음원 파일 없이 Web Audio API로 만듦)
+  Drone.jsx      작업실·연습실 탭의 기준음(드론) (고른 음·화음을 끌 때까지 계속 울림, 음원 파일 없이 Web Audio API로 만듦)
   Routine.jsx    작업실 탭의 "오늘의 루틴" 카드 (매일 체크하는 고정 연습 목록)
-  Tuner.jsx      작업실 탭의 튜너 (마이크로 음 높이 재기, 저장하는 값 없음)
-  ChordDrill.jsx 작업실 탭의 코드 전환 연습 (정한 박마다 무작위 코드와 다음 코드를 보여 줌, 박 소리는 Web Audio API)
-  ChordAnalysis.jsx 작업실 탭의 코드 분석 (조의 다이아토닉 코드·텐션 표, 입력한 코드 진행의 조·도수·역할·흐름 분석, 피아노로 들어보기. 저장하는 값은 카드 켜기·끄기뿐)
-  ChordChart.jsx 작업실 탭의 코드표·스케일표 (구성음·건반 그림, 피아노 음원으로 들어보기, 저장하는 값 없음)
+  Tuner.jsx      연습실 탭의 튜너 (마이크로 음 높이 재기, 저장하는 값 없음)
+  ChordDrill.jsx 연습실 탭의 코드 전환 연습 (정한 박마다 무작위 코드와 다음 코드를 보여 줌, 박 소리는 Web Audio API)
+  ChordAnalysis.jsx 연습실 탭의 코드 분석 (조의 다이아토닉 코드·텐션 표, 입력한 코드 진행의 조·도수·역할·흐름 분석, 피아노로 들어보기. 저장하는 값은 카드 켜기·끄기뿐)
+  ChordChart.jsx 연습실 탭의 코드표·스케일표 (구성음·건반 그림, 피아노 음원으로 들어보기, 저장하는 값 없음)
   PracticeTimer.jsx  모든 탭 위쪽의 연습 타이머 (시작·휴식·종료 후 연습 기록에 저장)
   Inspiration.jsx  영감 탭 (키워드 뽑기, 코드 진행과 들어보기, 아이디어 쓰기)
   Notebook.jsx   수첩 탭 (저장한 아이디어 보기·수정·삭제, 코드·녹음 다시 듣기)
   voiceMemo.js   아이디어 음성 메모와 연습 녹음 (마이크 녹음·재생, IndexedDB `muselog-audio` 버전 2: `memos` = 아이디어 id → 녹음 파일, `practice` = 연습 녹음 `{ id, createdAt, seconds, songTitle, blob }`. 이 기기 전용이라 백업·동기화에 넣지 않는다)
-  PracticeRecorder.jsx  작업실 탭의 연습 녹음 (10분까지, 20개까지, 듣기·파일로 저장·삭제)
-  useChordPlayer.js  영감·수첩 탭과 작업실 코드표가 함께 쓰는 코드 재생 (음원 불러오기, Web Audio API)
+  PracticeRecorder.jsx  작업실·연습실 탭의 연습 녹음 (10분까지, 20개까지, 듣기·파일로 저장·삭제)
+  useChordPlayer.js  영감·수첩 탭과 연습실 코드표가 함께 쓰는 코드 재생 (음원 불러오기, Web Audio API)
   App.css     화면 스타일
   index.css   기본 스타일
   lib/        순수 계산 함수와 테스트 (stats.js, calendar.js, songs.js, metronome.js, periods.js, routine.js, backup.js, auth.js, sync.js, tabs.js, tuner.js, drone.js, chordChart.js, chordDrill.js, chordAnalysis.js, chordAnalysisSettings.js, practiceRecordings.js, inspiration.js, timer.js, mic.js)
@@ -65,7 +66,7 @@ docs/         명세(specs/, 템플릿 _TEMPLATE.md), CHANGELOG.md
 | `muselog-routine` | 고정 연습 루틴 목록 `[{ id, title(1~40자) }]` (배열 순서 = 보이는 순서, 깨진 항목은 버림) |
 | `muselog-drone` | 기준음 설정 `{ note(0~11, 0 = 도 C), octave(2/3/4 = 낮게/보통/높게), mode("root"/"fifth"/"major"/"minor" = 근음만/근음+5도/장화음/단화음), volume(0~100) }` (없거나 깨진 항목은 기본값 9(라) / 3 / "root" / 60 — `normalizeDrone`) |
 | `muselog-chord-drill` | 코드 전환 연습 설정 `{ scope("all"/"key"), types(["maj","m","7","maj7","m7"] 중 1개 이상), key("C"~"B", 장조), sevenths(true = 7화음), bpm(40~200), beats(2/4/8), click(true/false) }` (없거나 깨진 항목은 기본값 "all" / ["maj","m"] / "C" / false / 80 / 4 / true — `normalizeChordDrill`) |
-| `muselog-chord-analysis` | 작업실 코드 분석 카드 켜기·끄기 `{ on: true/false }` (없거나 깨지면 켜짐 — `normalizeChordAnalysis`) |
+| `muselog-chord-analysis` | 연습실 코드 분석 카드 켜기·끄기 `{ on: true/false }` (없거나 깨지면 켜짐 — `normalizeChordAnalysis`) |
 | `muselog-routine-checks` | 오늘 체크한 루틴 `{ date("YYYY-MM-DD"), done: [id] }` (date가 오늘이 아니면 체크 없음으로 읽음) |
 | `muselog-tab-order` | 사이드바 탭 순서 (탭 이름 배열, 없거나 깨지면 기본 순서. 모르는 이름·중복은 버리고 빠진 탭은 뒤에 붙임 — `normalizeTabOrder`) |
 | `muselog-timer` | 지금 재는 연습 타이머 `{ status("running"/"resting"), since(시각 숫자), practiceMs, restMs }`, 재고 있지 않으면 키 없음. 이 기기 전용이라 백업·동기화에 넣지 않는다. 깨지면 처음 상태 |

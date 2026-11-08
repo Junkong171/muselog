@@ -54,7 +54,7 @@ function Keyboard({ marked, playing }) {
   );
 }
 
-// 작업실 탭의 코드표·스케일표: 근음과 종류를 고르면 구성음과 건반을 보여 주고 피아노로 들려준다
+// 연습실 탭의 코드표·스케일표: 근음과 종류를 고르면 구성음과 건반을 보여 주고 피아노로 들려준다
 function ChordChart() {
   const [kind, setKind] = useState("chord");
   const [root, setRoot] = useState(CHART_ROOTS[0].name);

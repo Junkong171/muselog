@@ -45,7 +45,7 @@ function scheduleChord(ctx, buffers, instrument, notes, time, seconds) {
   });
 }
 
-// 영감 탭, 수첩 탭, 작업실 코드표가 함께 쓰는 코드 재생. 화면에서 사라지면 소리를 멈춘다.
+// 영감 탭, 수첩 탭, 연습실 코드표가 함께 쓰는 코드 재생. 화면에서 사라지면 소리를 멈춘다.
 // id = 무엇을 재생하는지 구분하는 값 (수첩의 아이디어 id, 하나뿐이면 생략)
 export function useChordPlayer() {
   const [activeId, setActiveId] = useState(null);
@@ -67,7 +67,7 @@ export function useChordPlayer() {
 
   useEffect(() => stop, [stop]);
 
-  // chordList = 코드마다 음 번호 배열, seconds = 코드 하나의 길이 (작업실 스케일은 한 음씩 짧게)
+  // chordList = 코드마다 음 번호 배열, seconds = 코드 하나의 길이 (연습실 스케일은 한 음씩 짧게)
   async function play(instrumentId, chordList, id = null, seconds = CHORD_SECONDS) {
     stop();
     setAudioError(null);

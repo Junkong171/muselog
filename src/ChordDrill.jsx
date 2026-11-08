@@ -18,7 +18,7 @@ const SCHEDULE_AHEAD_SEC = 0.1;
 const MAX_SCHEDULE_AHEAD_SEC = 2;
 const CLICKS = { change: { frequency: 1500, volume: 0.9 }, beat: { frequency: 1000, volume: 0.55 } };
 
-// 작업실 탭의 코드 전환 연습: 정한 박마다 무작위 코드를 띄우고 다음 코드를 미리 보여 준다
+// 연습실 탭의 코드 전환 연습: 정한 박마다 무작위 코드를 띄우고 다음 코드를 미리 보여 준다
 function ChordDrill({ settings, onChangeSettings }) {
   const [running, setRunning] = useState(false);
   const [shown, setShown] = useState(null); // { beat, current, next }

@@ -40,7 +40,7 @@ function fadeOutChord(audio, chord) {
   chord.oscillators.forEach(osc => osc.stop(now + FADE_SEC + 0.05));
 }
 
-// 작업실 탭의 기준음(드론): 고른 음을 끌 때까지 계속 울린다
+// 작업실·연습실 탭의 기준음(드론): 고른 음을 끌 때까지 계속 울린다
 function Drone({ settings, onChangeSettings }) {
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState("");

@@ -207,7 +207,7 @@ function AnalysisBody() {
   );
 }
 
-// 작업실 탭의 코드 분석 카드. 켜기·끄기는 App이 저장한다 (muselog-chord-analysis)
+// 연습실 탭의 코드 분석 카드. 켜기·끄기는 App이 저장한다 (muselog-chord-analysis)
 function ChordAnalysis({ settings, onChangeSettings }) {
   const { on } = settings;
   return (

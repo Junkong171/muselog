@@ -1,4 +1,4 @@
-// 아이디어 음성 메모와 작업실 연습 녹음: 마이크로 녹음하고, 녹음 파일을 이 기기 브라우저(IndexedDB)에만 저장한다.
+// 아이디어 음성 메모와 작업실·연습실 연습 녹음: 마이크로 녹음하고, 녹음 파일을 이 기기 브라우저(IndexedDB)에만 저장한다.
 // 녹음 파일은 localStorage·백업·계정 동기화에 넣지 않는다 (아이디어의 audioSeconds만 함께 간다).
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MAX_RECORD_SECONDS } from "./lib/inspiration";
@@ -48,7 +48,7 @@ export const loadAudio = id => withStore("readonly", store => store.get(id));
 export const deleteAudio = id => withStore("readwrite", store => store.delete(id));
 export const savedAudioIds = () => withStore("readonly", store => store.getAllKeys());
 
-// 작업실 연습 녹음
+// 작업실·연습실 연습 녹음
 export const savePracticeRecording = recording => withStore("readwrite", store => store.put(recording), PRACTICE_STORE);
 export const listPracticeRecordings = () => withStore("readonly", store => store.getAll(), PRACTICE_STORE);
 export const deletePracticeRecording = id => withStore("readwrite", store => store.delete(id), PRACTICE_STORE);
