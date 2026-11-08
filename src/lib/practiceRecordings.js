@@ -1,4 +1,4 @@
-// 작업실 연습 녹음 계산 (순수 함수). 녹음과 저장은 voiceMemo.js, 화면은 PracticeRecorder.jsx에서 한다.
+// 작업실·연습실 연습 녹음 계산 (순수 함수). 녹음과 저장은 voiceMemo.js, 화면은 PracticeRecorder.jsx에서 한다.
 
 export const MAX_PRACTICE_SECONDS = 600; // 한 번에 10분까지
 export const MAX_PRACTICE_RECORDINGS = 20; // 기기에 20개까지

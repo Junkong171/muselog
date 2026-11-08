@@ -994,8 +994,8 @@ function App() {
           </section>
         )}
 
-        {/* 작업실·영감·수첩에서는 내용이 바로 보이도록 큰 카드 대신 한 줄 요약 */}
-        {["작업실", "영감", "수첩"].includes(activeTab) ? (
+        {/* 연습실·작업실·영감·수첩에서는 내용이 바로 보이도록 큰 카드 대신 한 줄 요약 */}
+        {["연습실", "작업실", "영감", "수첩"].includes(activeTab) ? (
         <section className="stats-strip" aria-label="연습 요약">
           <span>오늘 <strong>{todayMinutes}분</strong> / 목표 {goal}분 ({Math.min(Math.round((todayMinutes / Math.max(goal, 1)) * 100), 100)}%)</span>
           <div className="progress-track">
@@ -1425,6 +1425,25 @@ function App() {
           <LoadBoundary key="수첩">
             <Notebook ideas={ideas} onChangeIdeas={setIdeas} onOpenInspiration={() => setActiveTab("영감")} />
           </LoadBoundary>
+        ) : activeTab === "연습실" ? (
+          <>
+            <section className="section-heading">
+              <div>
+                <p className="eyebrow">PRACTICE ROOM</p>
+                <h2>연습실</h2>
+                <p className="section-sub">음정과 코드를 연습하는 도구를 모아 뒀어.</p>
+              </div>
+            </section>
+
+            <LoadBoundary key="연습실">
+              <Drone settings={drone} onChangeSettings={setDrone} />
+              <Tuner />
+              <PracticeRecorder songs={songs} />
+              <ChordChart />
+              <ChordDrill settings={chordDrill} onChangeSettings={setChordDrill} />
+              <ChordAnalysis settings={chordAnalysis} onChangeSettings={setChordAnalysis} />
+            </LoadBoundary>
+          </>
         ) : activeTab === "작업실" ? (
           <>
             <section className="section-heading">
@@ -1452,11 +1471,7 @@ function App() {
                 timerActive={timerActive}
               />
               <Drone settings={drone} onChangeSettings={setDrone} />
-              <Tuner />
               <PracticeRecorder songs={songs} />
-              <ChordChart />
-              <ChordDrill settings={chordDrill} onChangeSettings={setChordDrill} />
-              <ChordAnalysis settings={chordAnalysis} onChangeSettings={setChordAnalysis} />
             </LoadBoundary>
           </>
         ) : (
