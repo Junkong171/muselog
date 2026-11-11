@@ -24,12 +24,12 @@ describe("isAuthConfigured (Supabase 키 설정 여부)", () => {
 
 describe("displayName (상단 바 이름)", () => {
   it("구글 이름(full_name)을 먼저 쓴다", () => {
-    expect(displayName({ email: "a@b.com", user_metadata: { full_name: "문준서", name: "다른 이름" } })).toBe("문준서");
+    expect(displayName({ email: "a@b.com", user_metadata: { full_name: "홍길동", name: "다른 이름" } })).toBe("홍길동");
   });
 
   it("카카오 닉네임 등 다른 이름 항목도 쓴다", () => {
-    expect(displayName({ user_metadata: { nickname: "준서" } })).toBe("준서");
-    expect(displayName({ user_metadata: { preferred_username: " junseo " } })).toBe("junseo");
+    expect(displayName({ user_metadata: { nickname: "길동" } })).toBe("길동");
+    expect(displayName({ user_metadata: { preferred_username: " gildong " } })).toBe("gildong");
   });
 
   it("이름이 없으면 이메일 @ 앞부분", () => {
