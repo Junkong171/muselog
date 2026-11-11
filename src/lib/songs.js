@@ -10,6 +10,11 @@ export const SONG_SORT_OPTIONS = [
 export const INITIAL_SONGS = [
   { id: 1, title: "밤편지", artist: "아이유", type: "보컬", progress: 75 },
   { id: 2, title: "너를 생각해", artist: "주시크", type: "기타", progress: 45 },
+];
+
+// 예전(F-034 전)에 깔리던 예시 곡 3개. 저장된 곡이 이것 그대로면 동기화에서 "비어 있음"으로 본다
+export const OLD_INITIAL_SONGS = [
+  ...INITIAL_SONGS,
   { id: 3, title: "사랑은 늘 도망가", artist: "임영웅", type: "보컬", progress: 30 },
 ];
 

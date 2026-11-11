@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  INITIAL_SONGS,
   MAX_PURPOSE_LENGTH,
   normalizeSongSort,
   normalizeSongs,
@@ -149,5 +150,12 @@ describe("songCoverIndex (표지 그림)", () => {
 
   it("숫자가 아닌 id는 0번 그림", () => {
     [undefined, null, "abc", {}].forEach(v => expect(songCoverIndex(v)).toBe(0));
+  });
+});
+
+describe("INITIAL_SONGS (처음 깔리는 예시 곡, F-034)", () => {
+  it("밤편지와 너를 생각해 두 곡뿐", () => {
+    expect(INITIAL_SONGS.map(song => song.title)).toEqual(["밤편지", "너를 생각해"]);
+    expect(INITIAL_SONGS.some(song => song.title === "사랑은 늘 도망가")).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { decideSync, formatSummary, hashData, isEmptyData, normalizeSyncMeta, stableStringify, summarizeData } from "./sync";
-import { INITIAL_SONGS } from "./songs";
+import { INITIAL_SONGS, OLD_INITIAL_SONGS } from "./songs";
 
 const sample = { "muselog-songs": INITIAL_SONGS, "muselog-logs": [], "muselog-events": [], "muselog-routine": [] };
 const used = {
@@ -47,11 +47,16 @@ describe("normalizeSyncMeta", () => {
 });
 
 describe("isEmptyData, summarizeData", () => {
-  it("아무것도 없거나 예시 곡 3개뿐이면 비어 있음", () => {
+  it("아무것도 없거나 예시 곡(지금 2개 / 예전 3개)뿐이면 비어 있음", () => {
     expect(isEmptyData({})).toBe(true);
     expect(isEmptyData(undefined)).toBe(true);
     expect(isEmptyData(sample)).toBe(true);
     expect(isEmptyData({ "muselog-songs": [] })).toBe(true);
+    expect(isEmptyData({ "muselog-songs": OLD_INITIAL_SONGS })).toBe(true);
+  });
+
+  it("예전 예시 곡 3개라도 연습 기록이 함께 있으면 비어 있지 않음", () => {
+    expect(isEmptyData({ "muselog-songs": OLD_INITIAL_SONGS, "muselog-logs": [{ id: 1 }] })).toBe(false);
   });
 
   it("기록·일정·루틴이 하나라도 있거나 곡이 다르면 비어 있지 않음", () => {
@@ -61,7 +66,9 @@ describe("isEmptyData, summarizeData", () => {
     expect(isEmptyData({ ...sample, "muselog-periods": [{ id: 1, title: "스케일" }] })).toBe(false);
     expect(isEmptyData({ ...sample, "muselog-ideas": [{ id: 1, text: "새벽의 편의점" }] })).toBe(false);
     expect(isEmptyData({ "muselog-songs": [...INITIAL_SONGS, { id: 4, title: "새 곡" }] })).toBe(false);
-    expect(isEmptyData({ "muselog-songs": [{ id: 1, title: "바꾼 제목" }, INITIAL_SONGS[1], INITIAL_SONGS[2]] })).toBe(false);
+    expect(isEmptyData({ "muselog-songs": [{ id: 1, title: "바꾼 제목" }, INITIAL_SONGS[1]] })).toBe(false);
+    expect(isEmptyData({ "muselog-songs": [...OLD_INITIAL_SONGS, { id: 4, title: "새 곡" }] })).toBe(false);
+    expect(isEmptyData({ "muselog-songs": [OLD_INITIAL_SONGS[0], OLD_INITIAL_SONGS[1], { id: 3, title: "바꾼 제목" }] })).toBe(false);
   });
 
   it("개수 요약", () => {

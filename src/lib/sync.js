@@ -1,6 +1,6 @@
 // 계정 동기화 판단 (순수 함수). 실제 서버 읽기·쓰기는 App.jsx에서 supabase로 한다.
 // "data"는 백업 묶음 안쪽의 { 15개 키: 값 } 객체다 (buildBackup(...).data).
-import { INITIAL_SONGS } from "./songs";
+import { INITIAL_SONGS, OLD_INITIAL_SONGS } from "./songs";
 
 export const SYNC_META_KEY = "muselog-sync-meta";
 
@@ -42,7 +42,7 @@ export function normalizeSyncMeta(value) {
 
 const list = value => (Array.isArray(value) ? value : []);
 
-// 비어 있음: 연습 기록·일정·연습 기간·아이디어·루틴이 하나도 없고, 연습곡이 없거나 처음 깔리는 예시 곡 3개 그대로
+// 비어 있음: 연습 기록·일정·연습 기간·아이디어·루틴이 하나도 없고, 연습곡이 없거나 처음 깔리는 예시 곡(지금 2개, 예전 3개) 그대로
 export function isEmptyData(data) {
   const d = data ?? {};
   if (list(d["muselog-logs"]).length || list(d["muselog-events"]).length || list(d["muselog-periods"]).length || list(d["muselog-ideas"]).length || list(d["muselog-routine"]).length) {
@@ -50,10 +50,10 @@ export function isEmptyData(data) {
   }
   const songs = list(d["muselog-songs"]);
   if (songs.length === 0) return true;
-  return (
-    songs.length === INITIAL_SONGS.length &&
-    songs.every((song, i) => song?.id === INITIAL_SONGS[i].id && song?.title === INITIAL_SONGS[i].title)
-  );
+  const sameAs = examples =>
+    songs.length === examples.length &&
+    songs.every((song, i) => song?.id === examples[i].id && song?.title === examples[i].title);
+  return sameAs(INITIAL_SONGS) || sameAs(OLD_INITIAL_SONGS);
 }
 
 // 선택 창에 보여 줄 개수
