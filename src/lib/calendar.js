@@ -81,6 +81,14 @@ export function combineTime(hourText, minuteText) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+// 저장된 시간을 시·분 칸으로 나눈다 (일정 수정할 때 칸 채우기).
+// "09:05" → ["09", "05"], ""(종일)·깨진 값 → ["", ""]
+export function splitTime(time) {
+  const match = /^(\d{2}):(\d{2})$/.exec(typeof time === "string" ? time : "");
+  if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) return ["", ""];
+  return [match[1], match[2]];
+}
+
 export function formatEventTime(time) {
   return time || "종일";
 }

@@ -10,6 +10,7 @@ import {
   HOUR_OPTIONS,
   MINUTE_OPTIONS,
   normalizeEvents,
+  splitTime,
   sortEvents,
   upcomingEvents,
 } from "./calendar";
@@ -86,6 +87,26 @@ describe("normalizeEvents", () => {
       normalizeEvents([{ id: 1, date: "2026-10-30", time, title: "레슨" }])[0].time
     );
     expect(times).toEqual(["14:00", "", "", "", "", "23:59"]);
+  });
+});
+
+describe("splitTime (저장된 시간을 시·분 칸으로)", () => {
+  it("HH:MM을 시·분으로 나눈다", () => {
+    expect(splitTime("09:05")).toEqual(["09", "05"]);
+    expect(splitTime("14:00")).toEqual(["14", "00"]);
+    expect(splitTime("23:59")).toEqual(["23", "59"]);
+  });
+
+  it("종일(\"\")이나 깨진 값은 빈 칸", () => {
+    [undefined, null, "", "9:05", "24:00", "12:60", "abc", 1405, "14:00:00"].forEach(value => {
+      expect(splitTime(value)).toEqual(["", ""]);
+    });
+  });
+
+  it("나눈 값을 다시 합치면 원래 시간", () => {
+    ["00:00", "09:05", "18:30", ""].forEach(time => {
+      expect(combineTime(...splitTime(time))).toBe(time);
+    });
   });
 });
 
