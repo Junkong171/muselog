@@ -5,6 +5,7 @@ import {
   getMonthGrid,
   calcDday,
   combineTime,
+  splitTime,
   filterOptions,
   formatDday,
   formatDateLabel,
@@ -137,6 +138,7 @@ function App() {
   const [eventMemo, setEventMemo] = useState("");
   const [eventHour, setEventHour] = useState("");
   const [eventMinute, setEventMinute] = useState("");
+  const [editingEventId, setEditingEventId] = useState(null); // 고치는 중인 일정 (null = 새 일정 추가)
   const [openTimeList, setOpenTimeList] = useState(null); // "hour" | "minute" | null
   const [timeListFiltered, setTimeListFiltered] = useState(false);
   const [timeError, setTimeError] = useState(false);
@@ -156,6 +158,7 @@ function App() {
   // { date, done } 그대로 두고, 오늘 것인지는 화면을 그릴 때 todayChecks로 판단한다
   const [routineChecks, setRoutineChecks] = useState(() => loadData("muselog-routine-checks", null));
   const minuteInputRef = useRef(null);
+  const eventTitleRef = useRef(null);
   const periodTitleRef = useRef(null);
 
   useEffect(() => {
@@ -388,7 +391,18 @@ function App() {
     setMinutes(current => Math.max(0, current - target.minutes));
   }
 
-  function addEvent(e) {
+  function resetEventForm() {
+    setEventTitle("");
+    setEventMemo("");
+    setEventHour("");
+    setEventMinute("");
+    setEditingEventId(null);
+    setOpenTimeList(null);
+    setTimeError(false);
+  }
+
+  // 새 일정 추가, 또는 고치는 중이면 같은 id의 일정을 바꾼다 (날짜는 지금 고른 날)
+  function saveEvent(e) {
     e.preventDefault();
     if (!eventTitle.trim()) return;
 
@@ -398,16 +412,24 @@ function App() {
       return;
     }
 
-    setEvents(current => [
-      ...current,
-      { id: Date.now(), date: selectedDate, time, title: eventTitle.trim(), memo: eventMemo.trim() },
-    ]);
-    setEventTitle("");
-    setEventMemo("");
-    setEventHour("");
-    setEventMinute("");
+    const event = { id: editingEventId ?? Date.now(), date: selectedDate, time, title: eventTitle.trim(), memo: eventMemo.trim() };
+    setEvents(current =>
+      editingEventId === null
+        ? [...current, event]
+        : current.map(item => (item.id === editingEventId ? event : item)));
+    resetEventForm();
+  }
+
+  function editEvent(event) {
+    const [hour, minute] = splitTime(event.time);
+    setEventTitle(event.title);
+    setEventMemo(event.memo);
+    setEventHour(hour);
+    setEventMinute(minute);
+    setEditingEventId(event.id);
     setOpenTimeList(null);
     setTimeError(false);
+    eventTitleRef.current?.focus();
   }
 
   // 칸을 누르면 걸러지지 않은 목록 전체를 연다 (지금 값은 강조)
@@ -482,6 +504,7 @@ function App() {
 
   function deleteEvent(id) {
     setEvents(current => current.filter(event => event.id !== id));
+    if (editingEventId === id) resetEventForm();
   }
 
   function resetPeriodForm() {
@@ -1255,10 +1278,11 @@ function App() {
 
             <section className="chart-card">
               <div className="chart-head">
-                <h3>{formatDateLabel(selectedDate)} 일정 추가</h3>
+                <h3>{formatDateLabel(selectedDate)} 일정 {editingEventId === null ? "추가" : "수정"}</h3>
               </div>
-              <form className="song-form" onSubmit={addEvent}>
+              <form className="song-form" onSubmit={saveEvent}>
                 <input
+                  ref={eventTitleRef}
                   value={eventTitle}
                   onChange={e => setEventTitle(e.target.value)}
                   placeholder="일정 제목 (예: 레슨)"
@@ -1292,7 +1316,12 @@ function App() {
                   onChange={e => setEventMemo(e.target.value)}
                   placeholder="메모 (선택)"
                 />
-                <button className="primary-button" type="submit">일정 저장</button>
+                <button className="primary-button" type="submit">
+                  {editingEventId === null ? "일정 저장" : "수정 저장"}
+                </button>
+                {editingEventId !== null && (
+                  <button className="practice-button" type="button" onClick={resetEventForm}>취소</button>
+                )}
               </form>
               {timeError && <p className="time-error">시간을 확인해 주세요. (시 0~23, 분 0~59)</p>}
               {selectedPeriods.length > 0 && (
@@ -1318,6 +1347,7 @@ function App() {
                         <strong><span className="event-time">{formatEventTime(event.time)}</span>{event.title}</strong>
                         {event.memo && <p>{event.memo}</p>}
                       </div>
+                      <button className="practice-button" onClick={() => editEvent(event)}>수정</button>
                       <button className="practice-button" onClick={() => deleteEvent(event.id)}>
                         삭제
                       </button>
