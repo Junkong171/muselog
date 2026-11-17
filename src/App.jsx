@@ -43,6 +43,8 @@ import { normalizeChordDrill } from "./lib/chordDrill";
 import { normalizeChordAnalysis } from "./lib/chordAnalysisSettings";
 import { normalizeRoutine, routineProgress, todayChecks, toggleCheck } from "./lib/routine";
 import PracticeTimer from "./PracticeTimer";
+import { applyLogEdit, EMPTY_NOTE, logDraft, songChoices } from "./lib/practiceLogs";
+import { MAX_TIMER_MINUTES } from "./lib/timer";
 import Routine, { RoutineChecklist } from "./Routine";
 import { backupFileName, buildBackup, parseBackup, planRestore } from "./lib/backup";
 import { authErrorFromUrl, displayName } from "./lib/auth";
@@ -128,6 +130,9 @@ function App() {
   const [logMinutes, setLogMinutes] = useState("15");
   const [logNote, setLogNote] = useState("");
   const [logSongId, setLogSongId] = useState("");
+  const [editingLogId, setEditingLogId] = useState(null); // 고치는 중인 연습 기록 (한 번에 하나)
+  const [logDraftValue, setLogDraftValue] = useState({ songTitle: "", minutes: "", note: "" });
+  const [logEditError, setLogEditError] = useState(false);
   const [events, setEvents] = useState(() => normalizeEvents(loadData("muselog-events", [])));
   const [calMonth, setCalMonth] = useState(() => {
     const d = new Date();
@@ -373,6 +378,7 @@ function App() {
 
     setLogs(current => [log, ...current]);
     setMinutes(current => current + duration);
+    return log.id;
   }
 
   function addPracticeLog(e) {
@@ -380,7 +386,7 @@ function App() {
     const duration = Number(logMinutes);
     if (!Number.isFinite(duration) || duration < 1) return;
 
-    recordPractice(duration, logSongId, logNote.trim() || "연습 내용 미입력");
+    recordPractice(duration, logSongId, logNote.trim() || EMPTY_NOTE);
     setLogNote("");
   }
 
@@ -389,6 +395,34 @@ function App() {
     if (!target) return;
     setLogs(current => current.filter(log => log.id !== id));
     setMinutes(current => Math.max(0, current - target.minutes));
+    if (editingLogId === id) setEditingLogId(null);
+  }
+
+  function startLogEdit(log) {
+    setLogDraftValue(logDraft(log));
+    setEditingLogId(log.id);
+    setLogEditError(false);
+  }
+
+  // 타이머의 "곡·메모 적기": 연습 기록 탭에서 방금 저장한 기록을 연다 (아직 logs에 반영 전일 수 있어 기본값으로 채움)
+  function openLogEdit(id) {
+    setActiveTab("연습 기록");
+    const log = logs.find(item => item.id === id);
+    setLogDraftValue(log ? logDraft(log) : { songTitle: "", minutes: "", note: "" });
+    setEditingLogId(id);
+    setLogEditError(false);
+  }
+
+  function saveLogEdit(e) {
+    e.preventDefault();
+    const result = applyLogEdit(logs, editingLogId, logDraftValue);
+    if (!result) {
+      setLogEditError(true);
+      return;
+    }
+    setLogs(result.logs);
+    setMinutes(current => Math.max(0, current + result.diff));
+    setEditingLogId(null);
   }
 
   function resetEventForm() {
@@ -910,7 +944,7 @@ function App() {
           </div>
         </header>
 
-        <PracticeTimer songs={songs} onSave={recordPractice} onActiveChange={setTimerActive} />
+        <PracticeTimer songs={songs} onSave={recordPractice} onEditLog={openLogEdit} onActiveChange={setTimerActive} />
 
         {loginError && (
           <p className="login-error" role="alert">
@@ -1131,7 +1165,50 @@ function App() {
                     </h3>
                     <p>{new Date(log.date).toLocaleString("ko-KR")}</p>
                     <p>{log.note}</p>
+                    {editingLogId === log.id && (
+                      <form className="log-edit-form" onSubmit={saveLogEdit} noValidate>
+                        <label>
+                          곡
+                          <select
+                            value={logDraftValue.songTitle}
+                            onChange={e => setLogDraftValue(d => ({ ...d, songTitle: e.target.value }))}
+                          >
+                            <option value="">자유 연습</option>
+                            {songChoices(songs, log.songTitle).map(title => (
+                              <option key={title} value={title}>{title}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          연습 시간(분)
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min="1"
+                            max={MAX_TIMER_MINUTES}
+                            value={logDraftValue.minutes}
+                            onChange={e => { setLogDraftValue(d => ({ ...d, minutes: e.target.value })); setLogEditError(false); }}
+                          />
+                        </label>
+                        <label className="log-edit-note">
+                          메모
+                          <input
+                            value={logDraftValue.note}
+                            onChange={e => setLogDraftValue(d => ({ ...d, note: e.target.value }))}
+                            placeholder="오늘 무엇을 연습했나요?"
+                          />
+                        </label>
+                        {logEditError && <p className="time-error">연습 시간은 1~{MAX_TIMER_MINUTES}분 사이의 정수로 적어 주세요.</p>}
+                        <div className="timer-actions">
+                          <button className="primary-button" type="submit">수정 저장</button>
+                          <button className="practice-button" type="button" onClick={() => setEditingLogId(null)}>취소</button>
+                        </div>
+                      </form>
+                    )}
                   </div>
+                  {editingLogId !== log.id && (
+                    <button className="practice-button" onClick={() => startLogEdit(log)}>수정</button>
+                  )}
                   <button className="practice-button" onClick={() => deleteLog(log.id)}>
                     기록 삭제
                   </button>

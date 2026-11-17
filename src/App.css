@@ -3121,3 +3121,45 @@ select:focus-visible {
   background: var(--purple-light);
   box-shadow: 0 0 0 2px var(--purple-light);
 }
+
+/* ---------- 연습 기록 수정 (F-036) ---------- */
+.log-edit-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.log-edit-form label {
+  display: flex;
+  flex: 1 1 120px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.log-edit-form .log-edit-note {
+  flex: 3 1 200px;
+}
+
+.log-edit-form input,
+.log-edit-form select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  color: #3a3055;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+}
+
+.log-edit-form .time-error {
+  width: 100%;
+  margin: 0;
+}
