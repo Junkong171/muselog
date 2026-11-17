@@ -11,6 +11,7 @@ import {
   startTimer,
   timerMinutes,
 } from "./lib/timer";
+import { EMPTY_NOTE } from "./lib/practiceLogs";
 
 const STORAGE_KEY = "muselog-timer";
 
@@ -25,7 +26,8 @@ function loadTimer() {
 }
 
 // 모든 탭 위쪽의 연습 타이머. 1초마다 바뀌므로 App 전체가 다시 그려지지 않게 상태를 여기에 둔다
-function PracticeTimer({ songs, onSave, onActiveChange }) {
+// onSave(분, 곡 id, 메모)는 저장한 기록의 id를 돌려준다. onEditLog(id) = 연습 기록 탭에서 그 기록 고치기
+function PracticeTimer({ songs, onSave, onEditLog, onActiveChange }) {
   const [timer, setTimer] = useState(loadTimer);
   const [now, setNow] = useState(currentTime);
   const [ended, setEnded] = useState(null); // "연습 종료"를 누른 순간의 시간, null = 저장 칸 닫힘
@@ -34,6 +36,7 @@ function PracticeTimer({ songs, onSave, onActiveChange }) {
   const [note, setNote] = useState("");
   const [minutesError, setMinutesError] = useState(false);
   const [closedAlert, setClosedAlert] = useState(0); // 닫은 휴식 알림의 분. 이보다 큰 알림만 보인다
+  const [saved, setSaved] = useState(null); // 방금 바로 저장한 기록 { id, minutes, restMs }, null = 안내 없음
 
   useEffect(() => {
     if (timer) localStorage.setItem(STORAGE_KEY, JSON.stringify(timer));
@@ -57,14 +60,26 @@ function PracticeTimer({ songs, onSave, onActiveChange }) {
     setTimer(current => action(current, time));
   }
 
+  // 연습 종료 = 바로 저장 (F-036). 켜 둔 채 잊어 600분이 넘으면 저장 칸에서 시간을 고치게 한다
   function endPractice() {
     const reading = readTimer(timer, currentTime());
+    const filled = timerMinutes(reading.practiceMs);
+    if (filled <= MAX_TIMER_MINUTES) {
+      const id = onSave(filled, "", EMPTY_NOTE);
+      setSaved({ id, minutes: filled, restMs: reading.restMs });
+      setTimer(null);
+      return;
+    }
     setEnded(reading);
     setSongId("");
-    const filled = timerMinutes(reading.practiceMs);
     setMinutes(String(filled));
     setNote("");
-    setMinutesError(filled > MAX_TIMER_MINUTES); // 켜 둔 채 잊었으면 저장하기 전에 알려 준다
+    setMinutesError(true);
+  }
+
+  function editSaved() {
+    onEditLog(saved.id);
+    setSaved(null);
   }
 
   function closeTimer() {
@@ -79,7 +94,7 @@ function PracticeTimer({ songs, onSave, onActiveChange }) {
       setMinutesError(true);
       return;
     }
-    onSave(duration, songId, note.trim() || "연습 내용 미입력");
+    onSave(duration, songId, note.trim() || EMPTY_NOTE);
     closeTimer();
   }
 
@@ -89,10 +104,27 @@ function PracticeTimer({ songs, onSave, onActiveChange }) {
 
   if (!timer) {
     return (
-      <section className="practice-timer">
-        <button className="primary-button" onClick={() => change((_, time) => startTimer(time))}>
-          지금 연습 시작
-        </button>
+      <section className={`practice-timer${saved ? " saved" : ""}`}>
+        {saved && (
+          <p className="timer-summary" role="status">
+            연습 <strong>{saved.minutes}분</strong>을 기록했어요
+            {saved.restMs > 0 && <span> · 휴식 {formatClock(saved.restMs)} 제외</span>}
+          </p>
+        )}
+        <div className="timer-actions">
+          {saved && (
+            <>
+              <button className="primary-button" onClick={editSaved}>곡·메모 적기</button>
+              <button className="practice-button" onClick={() => setSaved(null)}>닫기</button>
+            </>
+          )}
+          <button
+            className={saved ? "practice-button" : "primary-button"}
+            onClick={() => { setSaved(null); change((_, time) => startTimer(time)); }}
+          >
+            지금 연습 시작
+          </button>
+        </div>
       </section>
     );
   }
